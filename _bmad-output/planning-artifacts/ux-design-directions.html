@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bmad-todo — Design Directions</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    section.direction { min-height: 100vh; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .direction-inner { max-width: 560px; width: 100%; }
+    h1.direction-title { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem; }
+    .task-list { list-style: none; padding: 0; margin: 0; }
+    .task-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid; min-height: 44px; }
+    .task-row:last-child { border-bottom: none; }
+    .checkbox { width: 20px; height: 20px; border: 2px solid; border-radius: 4px; flex-shrink: 0; cursor: pointer; }
+    .task-row.done .checkbox { background: currentColor; }
+    .task-row.done .label { text-decoration: line-through; opacity: 0.7; }
+    .label { flex: 1; font-size: 1rem; }
+    .add-row { display: flex; gap: 8px; margin-top: 16px; }
+    .add-row.at-top { margin-top: 0; margin-bottom: 24px; }
+    .add-input { flex: 1; padding: 12px 16px; border: 1px solid; border-radius: 8px; font-size: 1rem; }
+    .add-btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .empty-state { text-align: center; padding: 3rem 1rem; }
+    .empty-state h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; }
+    .empty-state p { margin-bottom: 24px; opacity: 0.8; }
+    .empty-btn { padding: 12px 24px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; border: none; }
+    nav { position: fixed; top: 0; left: 0; right: 0; padding: 12px 24px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); border-bottom: 1px solid #eee; z-index: 10; display: flex; gap: 12px; flex-wrap: wrap; }
+    nav a { color: #333; text-decoration: none; font-size: 0.875rem; padding: 6px 10px; border-radius: 6px; }
+    nav a:hover { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="#chosen">★ Chosen</a>
+    <a href="#dir1">1. Minimal Light</a>
+    <a href="#dir2">2. Minimal Dark</a>
+    <a href="#dir3">3. Warm Minimal</a>
+    <a href="#dir4">4. Compact</a>
+    <a href="#dir5">5. Airy</a>
+    <a href="#dir6">6. Empty states</a>
+  </nav>
+
+  <!-- CHOSEN: Warm Minimal + Airy, Add at top -->
+  <section id="chosen" class="direction" style="background: #fefdfb; color: #2c2419;">
+    <div class="direction-inner">
+      <h1 class="direction-title" style="color: #6b5b4f;">Chosen — Warm Minimal + Airy spacing, Add at top</h1>
+      <div class="add-row at-top">
+        <input type="text" class="add-input" placeholder="Add a task…" style="padding: 16px 20px; border-color: #d4c9b8; background: #fff; font-size: 1.0625rem;">
+        <button type="button" class="add-btn" style="padding: 16px 28px; background: #8b7355; color: #fefdfb;">Add</button>
+      </div>
+      <ul class="task-list">
+        <li class="task-row" style="padding: 20px 0; border-color: #e8e2d9; min-height: 48px;"><span class="checkbox" style="width: 24px; height: 24px; border-width: 2px; border-color: #8b7355;"></span><span class="label" style="font-size: 1.125rem;">Ship bmad-todo MVP</span></li>
+        <li class="task-row" style="padding: 20px 0; border-color: #e8e2d9; min-height: 48px;"><span class="checkbox" style="width: 24px; height: 24px; border-width: 2px; border-color: #8b7355;"></span><span class="label" style="font-size: 1.125rem;">Write UX spec</span></li>
+        <li class="task-row done" style="padding: 20px 0; border-color: #e8e2d9; min-height: 48px;"><span class="checkbox" style="width: 24px; height: 24px; border-color: #6b8e23; background: #6b8e23;"></span><span class="label" style="font-size: 1.125rem;">Set up repo</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Direction 1: Minimal Light -->
+  <section id="dir1" class="direction" style="background: #fafafa; color: #1a1a1a;">
+    <div class="direction-inner">
+      <h1 class="direction-title">Direction 1 — Minimal Light</h1>
+      <ul class="task-list">
+        <li class="task-row"><span class="checkbox" style="border-color: #333;"></span><span class="label">Ship bmad-todo MVP</span></li>
+        <li class="task-row"><span class="checkbox" style="border-color: #333;"></span><span class="label">Write UX spec</span></li>
+        <li class="task-row done"><span class="checkbox" style="border-color: #22c55e; background: #22c55e;"></span><span class="label">Set up repo</span></li>
+      </ul>
+      <div class="add-row">
+        <input type="text" class="add-input" placeholder="Add a task…" style="border-color: #ddd; background: #fff;">
+        <button type="button" class="add-btn" style="background: #1a1a1a; color: #fff;">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Direction 2: Minimal Dark -->
+  <section id="dir2" class="direction" style="background: #1a1a1a; color: #e5e5e5;">
+    <div class="direction-inner">
+      <h1 class="direction-title" style="color: #a3a3a3;">Direction 2 — Minimal Dark</h1>
+      <ul class="task-list">
+        <li class="task-row" style="border-color: #333;"><span class="checkbox" style="border-color: #a3a3a3;"></span><span class="label">Ship bmad-todo MVP</span></li>
+        <li class="task-row" style="border-color: #333;"><span class="checkbox" style="border-color: #a3a3a3;"></span><span class="label">Write UX spec</span></li>
+        <li class="task-row done" style="border-color: #333;"><span class="checkbox" style="border-color: #4ade80; background: #4ade80;"></span><span class="label">Set up repo</span></li>
+      </ul>
+      <div class="add-row">
+        <input type="text" class="add-input" placeholder="Add a task…" style="border-color: #404040; background: #262626; color: #e5e5e5;">
+        <button type="button" class="add-btn" style="background: #4ade80; color: #1a1a1a;">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Direction 3: Warm Minimal -->
+  <section id="dir3" class="direction" style="background: #fefdfb; color: #2c2419;">
+    <div class="direction-inner">
+      <h1 class="direction-title" style="color: #6b5b4f;">Direction 3 — Warm Minimal</h1>
+      <ul class="task-list">
+        <li class="task-row" style="border-color: #e8e2d9;"><span class="checkbox" style="border-color: #8b7355;"></span><span class="label">Ship bmad-todo MVP</span></li>
+        <li class="task-row" style="border-color: #e8e2d9;"><span class="checkbox" style="border-color: #8b7355;"></span><span class="label">Write UX spec</span></li>
+        <li class="task-row done" style="border-color: #e8e2d9;"><span class="checkbox" style="border-color: #6b8e23; background: #6b8e23;"></span><span class="label">Set up repo</span></li>
+      </ul>
+      <div class="add-row">
+        <input type="text" class="add-input" placeholder="Add a task…" style="border-color: #d4c9b8; background: #fff;">
+        <button type="button" class="add-btn" style="background: #8b7355; color: #fefdfb;">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Direction 4: Compact -->
+  <section id="dir4" class="direction" style="background: #fff; color: #111;">
+    <div class="direction-inner">
+      <h1 class="direction-title" style="font-size: 0.75rem;">Direction 4 — Compact</h1>
+      <ul class="task-list">
+        <li class="task-row" style="padding: 8px 0; min-height: 36px; border-color: #eee;"><span class="checkbox" style="width: 16px; height: 16px; border-color: #666;"></span><span class="label" style="font-size: 0.9375rem;">Ship bmad-todo MVP</span></li>
+        <li class="task-row" style="padding: 8px 0; min-height: 36px; border-color: #eee;"><span class="checkbox" style="width: 16px; height: 16px; border-color: #666;"></span><span class="label" style="font-size: 0.9375rem;">Write UX spec</span></li>
+        <li class="task-row done" style="padding: 8px 0; min-height: 36px; border-color: #eee;"><span class="checkbox" style="width: 16px; height: 16px; border-color: #16a34a; background: #16a34a;"></span><span class="label" style="font-size: 0.9375rem;">Set up repo</span></li>
+      </ul>
+      <div class="add-row" style="margin-top: 12px;">
+        <input type="text" class="add-input" placeholder="Add a task…" style="padding: 8px 12px; border-color: #ddd;">
+        <button type="button" class="add-btn" style="padding: 8px 16px; background: #111; color: #fff;">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Direction 5: Airy -->
+  <section id="dir5" class="direction" style="background: #f8fafc; color: #0f172a;">
+    <div class="direction-inner">
+      <h1 class="direction-title" style="color: #64748b;">Direction 5 — Airy</h1>
+      <ul class="task-list">
+        <li class="task-row" style="padding: 20px 0; border-color: #e2e8f0;"><span class="checkbox" style="width: 24px; height: 24px; border-width: 2px; border-color: #475569;"></span><span class="label" style="font-size: 1.125rem;">Ship bmad-todo MVP</span></li>
+        <li class="task-row" style="padding: 20px 0; border-color: #e2e8f0;"><span class="checkbox" style="width: 24px; height: 24px; border-width: 2px; border-color: #475569;"></span><span class="label" style="font-size: 1.125rem;">Write UX spec</span></li>
+        <li class="task-row done" style="padding: 20px 0; border-color: #e2e8f0;"><span class="checkbox" style="width: 24px; height: 24px; border-color: #22c55e; background: #22c55e;"></span><span class="label" style="font-size: 1.125rem;">Set up repo</span></li>
+      </ul>
+      <div class="add-row" style="margin-top: 24px;">
+        <input type="text" class="add-input" placeholder="Add a task…" style="padding: 16px 20px; border-color: #cbd5e1; font-size: 1.0625rem;">
+        <button type="button" class="add-btn" style="padding: 16px 28px; background: #0f172a; color: #fff;">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Direction 6: Empty states (Warm Minimal + Airy) -->
+  <section id="dir6" class="direction" style="background: #fefdfb; color: #2c2419;">
+    <div class="direction-inner">
+      <h1 class="direction-title" style="color: #6b5b4f;">Direction 6 — Empty state (Warm Minimal + Airy)</h1>
+      <div class="add-row at-top">
+        <input type="text" class="add-input" placeholder="Add a task…" style="padding: 16px 20px; border-color: #d4c9b8; background: #fff; font-size: 1.0625rem;">
+        <button type="button" class="add-btn" style="padding: 16px 28px; background: #8b7355; color: #fefdfb;">Add</button>
+      </div>
+      <div class="empty-state" style="padding: 4rem 1rem;">
+        <h2 style="font-size: 1.25rem;">No tasks yet</h2>
+        <p style="margin-bottom: 24px; color: #6b5b4f;">Add your first task above to get started.</p>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>
