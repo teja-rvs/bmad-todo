@@ -1,5 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { fetchTasks } from './tasks'
+import { fetchTasks, getBaseUrl } from './tasks'
+
+describe('getBaseUrl', () => {
+  it('throws when VITE_API_URL is not set (empty string)', () => {
+    expect(() => getBaseUrl({ VITE_API_URL: '' })).toThrow('VITE_API_URL is not set')
+  })
+
+  it('throws when VITE_API_URL is missing (undefined)', () => {
+    expect(() => getBaseUrl({})).toThrow('VITE_API_URL is not set')
+  })
+
+  it('returns URL without trailing slash when given trailing slash', () => {
+    expect(getBaseUrl({ VITE_API_URL: 'http://localhost:3000/' })).toBe('http://localhost:3000')
+  })
+
+  it('returns URL unchanged when no trailing slash', () => {
+    expect(getBaseUrl({ VITE_API_URL: 'http://localhost:3000' })).toBe('http://localhost:3000')
+  })
+})
 
 describe('fetchTasks', () => {
   beforeEach(() => {

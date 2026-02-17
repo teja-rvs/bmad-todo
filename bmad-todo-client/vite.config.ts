@@ -14,5 +14,11 @@ export default defineConfig({
     env: {
       VITE_API_URL: 'http://localhost:3000',
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.spec.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/types/**'],
+    },
   },
 })

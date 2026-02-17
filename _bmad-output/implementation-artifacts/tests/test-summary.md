@@ -18,30 +18,28 @@
 
 ### API Tests (Rails – bmad-todo-api)
 
-- [x] `bmad-todo-api/test/integration/tasks_endpoint_test.rb` – GET /tasks
-  - Returns 200 and empty `{ tasks: [] }` when no tasks
-  - Returns 200 and tasks array with snake_case keys when tasks exist
-  - Returns CORS header for frontend origin (localhost:5173)
-  - POST /tasks returns 404 (route not defined)
+- [x] `bmad-todo-api/test/integration/tasks_endpoint_test.rb` – GET/POST /tasks
+  - GET /tasks returns 200 and empty `{ tasks: [] }` when no tasks
+  - GET /tasks returns 200 and tasks array with snake_case keys when tasks exist
+  - GET /tasks returns CORS header for frontend origin (localhost:5173)
+  - POST /tasks with valid title returns 201 and created task
+  - POST /tasks with blank title returns 422 and error body
+  - POST /tasks with title over 255 chars returns 422
+  - POST /tasks with missing title returns 422
 - [x] `bmad-todo-api/test/integration/health_endpoint_test.rb` – Health check
   - GET /up returns 200 when app is healthy
   - GET /up returns a present body
 - [x] `bmad-todo-api/test/models/task_test.rb` – Task model
-  - Valid with title present; invalid without title; invalid with blank title; invalid when title over 255 chars
+  - Valid with title present; invalid without/blank/too long title; completed defaults to false
 
 ### Unit / Component Tests (Client)
 
-- [x] `bmad-todo-client/src/App.test.tsx` – App component
-  - Shows loading then fetches tasks on mount
-  - Shows empty state when task list is empty
-  - Shows task list with task titles when tasks exist
-  - Shows home screen with add row at top
-  - Shows error message when fetch fails
-- [x] `bmad-todo-client/src/api/tasks.test.ts` – fetchTasks API
-  - Calls GET on baseUrl/tasks and returns tasks array
-  - Returns empty tasks array when API returns empty list
-  - Throws when response is not ok (e.g. 500)
-  - Throws when response is missing tasks array
+- [x] `bmad-todo-client/src/App.test.tsx` – App (loading, empty, list, add row, error)
+- [x] `bmad-todo-client/src/api/tasks.test.ts` – getBaseUrl, fetchTasks (GET /tasks, errors, timeout)
+- [x] `bmad-todo-client/src/components/AddRow.test.tsx` – AddRow (placeholder UI)
+- [x] `bmad-todo-client/src/components/TaskList.test.tsx` – TaskList
+- [x] `bmad-todo-client/src/components/TaskRow.test.tsx` – TaskRow
+- [x] `bmad-todo-client/src/components/EmptyState.test.tsx` – EmptyState
 
 ### E2E Tests (Client)
 
@@ -57,9 +55,9 @@
 
 | Area            | Covered | Notes                                      |
 |-----------------|--------|--------------------------------------------|
-| API endpoints   | 2/2    | GET /up, GET /tasks (+ 404 for POST)       |
-| API model       | 1      | Task validations (incl. length)             |
-| UI / API client | 2      | App (loading, empty, list, add row, error); fetchTasks |
+| API endpoints   | 2/2    | GET /up, GET /tasks, POST /tasks           |
+| API model       | 1      | Task validations (presence, length, default) |
+| UI / API client | 6      | App, fetchTasks, AddRow, TaskList, TaskRow, EmptyState |
 | E2E flows       | 1      | Home screen, add row, empty/list/error, task list (mocked) |
 
 ---
@@ -96,21 +94,21 @@ npm run test:e2e         # starts dev server if needed (reuseExistingServer when
 bundle install   # if needed
 bin/rails test   # all tests
 bin/rails test test/integration/   # integration only
-bin/rails test test/models/         # model tests only
+bin/rails test test/models/       # model tests only
 ```
 
 ---
 
-## Status
+## Validation (2026-02-17)
 
-- **API tests:** 10 tests (4 tasks endpoint, 2 health, 4 task model) – all passing.
-- **Client unit tests:** 9 tests (5 App, 4 fetchTasks) – all passing.
-- **Client E2E tests:** 4 Playwright tests – run with `npm run test:e2e` when port 5173 is available (or stop any existing dev server first).
+- **API:** 14 tests, 54 assertions – all passed ✅
+- **Client unit:** 31 tests (6 files) – all passed ✅
+- **Client E2E:** 4 Playwright tests – all passed ✅
 
 ---
 
 ## Next Steps
 
 - Run tests in CI (e.g. client: `npm run test:run && npm run test:e2e`; API: `cd bmad-todo-api && bin/rails test`).
-- When add-task or complete-task UI is implemented, add E2E tests for those flows.
-- When new API endpoints are added (e.g. POST/PATCH/DELETE tasks), add matching integration tests in `bmad-todo-api/test/integration/`.
+- When add-task flow is implemented (Story 2.2), add unit tests for `createTask()` in `src/api/tasks.test.ts` and E2E for “type title, submit, see new task in list”.
+- When new API endpoints are added (e.g. PATCH/DELETE tasks), add matching integration tests in `bmad-todo-api/test/integration/`.

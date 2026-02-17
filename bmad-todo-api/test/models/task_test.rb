@@ -25,4 +25,9 @@ class TaskTest < ActiveSupport::TestCase
     assert_not task.valid?
     assert_includes task.errors[:title], "is too long (maximum is 255 characters)"
   end
+
+  test "completed defaults to false when not set" do
+    task = Task.new(title: "A task")
+    assert_equal false, task.completed
+  end
 end

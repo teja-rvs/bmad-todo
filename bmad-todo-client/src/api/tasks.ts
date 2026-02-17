@@ -1,7 +1,9 @@
 import type { TasksResponse } from '../types/task'
 
-const getBaseUrl = (): string => {
-  const url = import.meta.env.VITE_API_URL
+/** Resolves API base URL from env. Optional env param for unit tests only. */
+export function getBaseUrl(env?: { VITE_API_URL?: string }): string {
+  const source = env ?? import.meta.env
+  const url = source.VITE_API_URL
   if (typeof url !== 'string' || url === '') {
     throw new Error('VITE_API_URL is not set')
   }
