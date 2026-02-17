@@ -42,4 +42,10 @@ class TasksEndpointTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "http://localhost:5173", response.headers["Access-Control-Allow-Origin"]
   end
+
+  test "POST /tasks returns 404 when route does not exist" do
+    post "/tasks", params: { task: { title: "New task" } }
+    assert_response :not_found
+    assert_equal 404, response.status
+  end
 end

@@ -8,83 +8,89 @@
 
 ## Test Framework
 
-- **Client (bmad-todo-client):** Vitest + React Testing Library + Playwright (unit + E2E)  
-- **API (bmad-todo-api):** Rails Minitest + `ActionDispatch::IntegrationTest`  
+- **Client (bmad-todo-client):** Vitest + React Testing Library + Playwright (unit + E2E)
+- **API (bmad-todo-api):** Rails Minitest + `ActionDispatch::IntegrationTest`
 - **Locations:** `bmad-todo-client/` (Vite + React), `bmad-todo-api/` (Rails API)
 
 ---
 
 ## Generated Tests
 
-### Unit / Component Tests
+### API Tests (Rails – bmad-todo-api)
 
-- [x] `bmad-todo-client/src/App.test.tsx` – App component (heading, counter, links)
+- [x] `bmad-todo-api/test/integration/tasks_endpoint_test.rb` – GET /tasks
+  - Returns 200 and empty `{ tasks: [] }` when no tasks
+  - Returns 200 and tasks array with snake_case keys when tasks exist
+  - Returns CORS header for frontend origin (localhost:5173)
+  - POST /tasks returns 404 (route not defined)
+- [x] `bmad-todo-api/test/integration/health_endpoint_test.rb` – Health check
+  - GET /up returns 200 when app is healthy
+  - GET /up returns a present body
+- [x] `bmad-todo-api/test/models/task_test.rb` – Task model
+  - Valid with title present; invalid without title; invalid with blank title
+
+### Unit / Component Tests (Client)
+
+- [x] `bmad-todo-client/src/App.test.tsx` – App component
   - Renders "Vite + React" heading
   - Increments count on button click
   - Renders Vite and React logo links
 
-### E2E Tests
+### E2E Tests (Client)
 
-- [x] `bmad-todo-client/e2e/app.spec.ts` – App UI (Chromium)
+- [x] `bmad-todo-client/e2e/app.spec.ts` – App UI (Playwright, Chromium)
   - Shows Vite + React heading
   - Counter increments on button click
   - Vite and React links are present
-
-### API Tests (Rails – bmad-todo-api)
-
-- [x] `bmad-todo-api/test/integration/health_endpoint_test.rb` – Health check
-  - GET /up returns 200 when app is healthy
-  - GET /up returns a present body (plain text)
 
 ---
 
 ## Coverage
 
-| Area           | Covered | Notes                          |
-|----------------|--------|---------------------------------|
-| UI components  | 1/1    | `App` (counter, links, heading) |
-| API endpoints  | 1/1    | GET /up (health) in Rails API   |
-| E2E flows      | 1      | Main app page and counter       |
+| Area            | Covered | Notes                                      |
+|-----------------|--------|--------------------------------------------|
+| API endpoints   | 2/2    | GET /up, GET /tasks (+ 404 for POST)       |
+| API model       | 1      | Task validations                           |
+| UI components   | 1/1    | App (counter, links, heading)              |
+| E2E flows       | 1      | Main app page and counter                  |
 
 ---
 
 ## Run Commands
 
-From `bmad-todo-client/`:
+**Client (bmad-todo-client):**
 
 ```bash
 # Unit / component tests (Vitest)
 npm run test        # watch
 npm run test:run    # single run
 
-# E2E tests (Playwright) – install browsers once
-npx playwright install
-npm run test:e2e
+# E2E tests (Playwright) – ensure dev server or reuse
+npx playwright install   # once, to install browsers
+npm run test:e2e         # or CI= npm run test:e2e if port 5173 in use
 ```
 
-**Note:** Run `npx playwright install` once to download browser binaries. After that, `npm run test:e2e` starts the dev server (or reuses it) and runs E2E tests.
-
-From `bmad-todo-api/` (Rails API):
+**API (bmad-todo-api):**
 
 ```bash
 bundle install   # if needed
 bin/rails test   # all tests
-bin/rails test test/integration/health_endpoint_test.rb   # API integration tests only
+bin/rails test test/integration/   # integration only
+bin/rails test test/models/         # model tests only
 ```
 
 ---
 
 ## Status
 
-- **Client unit tests:** All 3 tests pass.
-- **Client E2E tests:** Implemented; require `npx playwright install` before first run (browsers not installed in this environment).
-- **API tests:** 2 integration tests for GET /up; run with `bin/rails test` from `bmad-todo-api/` (requires `bundle install` and PostgreSQL for full run).
+- **API tests:** 9 tests (4 tasks endpoint, 2 health, 3 task model) – all passing.
+- **Client unit tests:** 3 tests in App.test.tsx – all passing.
+- **Client E2E tests:** 3 Playwright tests – all passing (run with dev server on 5173 or `CI= npm run test:e2e` to reuse existing server).
 
 ---
 
 ## Next Steps
 
-- Run `npx playwright install` in `bmad-todo-client`, then `npm run test:e2e` to confirm E2E.
-- Add tests for new components/features as they are added.
-- Consider running tests in CI (e.g. client: `npm run test:run && npm run test:e2e`; API: `cd bmad-todo-api && bin/rails test`).
-- When you add more API endpoints (e.g. tasks CRUD), add matching integration tests in `bmad-todo-api/test/integration/`.
+- Run tests in CI (e.g. client: `npm run test:run && npm run test:e2e`; API: `cd bmad-todo-api && bin/rails test`).
+- When todo UI is implemented, add E2E tests for task list, add task, and complete task flows.
+- When new API endpoints are added (e.g. POST/PATCH/DELETE tasks), add matching integration tests in `bmad-todo-api/test/integration/`.
