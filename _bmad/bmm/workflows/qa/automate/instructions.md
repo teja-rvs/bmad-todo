@@ -46,13 +46,26 @@ For UI features, generate tests that:
 - Keep tests linear and simple
 - Follow project's existing test patterns
 
-### Step 4: Run Tests
+### Step 4: Stop project-related local servers
+
+Before running tests, stop any project-related local servers so that:
+
+- E2E runners (e.g. Playwright) can start and bind to the dev server port (e.g. 5173) without "port already in use" errors.
+- API/integration tests run in a clean environment without port conflicts.
+
+Actions:
+
+- Identify typical dev ports from the project (e.g. Vite: 5173, Rails: 3000).
+- Stop processes listening on those ports, or stop any running `npm run dev`, `rails server`, or similar from the project.
+- On Unix: e.g. `lsof -ti :5173 | xargs kill -9` (or the project’s ports); or close the terminals where dev servers are running.
+
+### Step 5: Run Tests
 
 Execute tests to verify they pass (use project's test command).
 
 If failures occur, fix them immediately.
 
-### Step 5: Create Summary
+### Step 6: Create Summary
 
 Output markdown summary:
 
@@ -107,4 +120,4 @@ If the project needs:
 
 Save summary to: `{implementation_artifacts}/tests/test-summary.md`
 
-**Done!** Tests generated and verified.
+**Done!** Tests generated and verified. Remember to stop local servers before running tests (Step 4).

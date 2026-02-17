@@ -1,42 +1,43 @@
-#root {
-  max-width: 1280px;
+/* Warm Minimal + Airy layout (AC #4) */
+.app-container {
+  width: 100%;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
+  background: #fefdfb;
+  color: #2c2419;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app-header {
+  margin-bottom: 24px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c2419;
+  margin: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.card {
-  padding: 2em;
+.app-content {
+  min-height: 120px;
 }
 
-.read-the-docs {
-  color: #888;
+.loading,
+.error {
+  font-size: 1.125rem;
+  color: #2c2419;
+  padding: 20px 0;
+}
+
+.error {
+  color: #b91c1c;
 }

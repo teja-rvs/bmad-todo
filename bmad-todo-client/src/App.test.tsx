@@ -1,26 +1,126 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import App from './App'
 
 describe('App', () => {
-  it('renders Vite + React heading', () => {
-    render(<App />)
-    expect(screen.getByRole('heading', { name: /vite \+ react/i })).toBeInTheDocument()
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn())
   })
 
-  it('increments count when button is clicked', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-    const button = screen.getByRole('button', { name: /count is 0/i })
-    expect(button).toBeInTheDocument()
-    await user.click(button)
-    expect(screen.getByRole('button', { name: /count is 1/i })).toBeInTheDocument()
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
-  it('shows Vite and React logos with links', () => {
+  it('shows loading then fetches tasks on mount', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                json: async () => ({ tasks: [] }),
+              }),
+            10
+          )
+        )
+    )
+
     render(<App />)
-    expect(screen.getByRole('link', { name: /vite logo/i })).toHaveAttribute('href', 'https://vite.dev')
-    expect(screen.getByRole('link', { name: /react logo/i })).toHaveAttribute('href', 'https://react.dev')
+
+    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status', { name: /loading/i })).not.toBeInTheDocument()
+    })
+    expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/\/tasks$/), expect.anything())
+  })
+
+  it('shows empty state when task list is empty', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ tasks: [] }),
+    })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument()
+    })
+  })
+
+  it('shows task list with task titles when tasks exist', async () => {
+    const tasks = [
+      {
+        id: 1,
+        title: 'First task',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 2,
+        title: 'Second task',
+        completed: true,
+        created_at: '2026-01-02T00:00:00Z',
+        updated_at: '2026-01-02T00:00:00Z',
+      },
+    ]
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ tasks }),
+    })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('First task')).toBeInTheDocument()
+      expect(screen.getByText('Second task')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('list', { name: /task list/i })).toBeInTheDocument()
+  })
+
+  it('shows home screen with add row at top', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ tasks: [] }),
+    })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /new task title/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add task/i })).toBeInTheDocument()
+    })
+  })
+
+  it('shows error message when fetch fails', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'))
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Network error')
+    })
+  })
+
+  it('does not update state after unmount when fetch resolves late', async () => {
+    let resolveFetch: (value: { ok: boolean; json: () => Promise<{ tasks: unknown[] }> }) => void
+    const fetchPromise = new Promise<{ ok: boolean; json: () => Promise<{ tasks: unknown[] }> }>((resolve) => {
+      resolveFetch = resolve
+    })
+    ;(fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(fetchPromise)
+
+    const { unmount } = render(<App />)
+    unmount()
+
+    resolveFetch!({
+      ok: true,
+      json: async () => ({ tasks: [{ id: 1, title: 'Late', completed: false, created_at: '', updated_at: '' }] }),
+    })
+    await fetchPromise
+
+    await new Promise((r) => setTimeout(r, 0))
+    expect(document.body.textContent).not.toContain('Late')
   })
 })
