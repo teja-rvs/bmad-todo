@@ -1,6 +1,6 @@
 # Story 1.2: Backend — tasks table and GET /tasks
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -122,10 +122,12 @@ so that my tasks persist and can be displayed when I open the app.
 - **Tasks table and Task model:** Generated Task model via `rails g model Task title:string completed:boolean`; edited migration to add `default: false, null: false` to `completed`. Ran `rails db:migrate`. Added `validates :title, presence: true` to `app/models/task.rb`. Model tests (3) pass.
 - **GET /tasks endpoint:** Added `TasksController#index` returning `{ tasks: Task.all }` and `resources :tasks, only: [:index]` in `config/routes.rb`. Integration tests cover empty list and list with tasks (snake_case keys). All tests pass.
 - **CORS:** Added `rack-cors` to Gemfile and configured `config/initializers/cors.rb` to allow origin `http://localhost:5173`. Integration test asserts `Access-Control-Allow-Origin` header for that origin.
+- **Senior Developer Review (AI):** Addressed MEDIUM/LOW findings: added migration `AddNotNullToTasksTitle` for DB-level title null constraint; CORS origin now from `ENV.fetch("CORS_ORIGIN", "http://localhost:5173")` for production; explicit JSON serialization and `Task.order(created_at: :asc)` in controller; Task model `length: { maximum: 255 }` and test; File List limited to source files.
 
 ### File List
 
 - bmad-todo-api/db/migrate/20260217143302_create_tasks.rb
+- bmad-todo-api/db/migrate/20260217151224_add_not_null_to_tasks_title.rb
 - bmad-todo-api/app/models/task.rb
 - bmad-todo-api/app/controllers/tasks_controller.rb
 - bmad-todo-api/config/routes.rb
@@ -135,9 +137,8 @@ so that my tasks persist and can be displayed when I open the app.
 - bmad-todo-api/db/schema.rb
 - bmad-todo-api/test/models/task_test.rb
 - bmad-todo-api/test/integration/tasks_endpoint_test.rb
-- _bmad-output/implementation-artifacts/sprint-status.yaml
-- _bmad-output/implementation-artifacts/1-2-backend-tasks-table-and-get-tasks.md
 
 ## Change Log
 
 - 2026-02-17: Implemented Story 1.2 — tasks table and Task model, GET /tasks endpoint, CORS for frontend origin. All ACs satisfied; 8 tests (model + integration) pass.
+- 2026-02-17: Code review (AI): fixed MEDIUM/LOW issues (title null constraint, CORS from env, explicit serialization/order, title length validation); 10 tests pass.

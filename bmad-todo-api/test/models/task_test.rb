@@ -19,4 +19,10 @@ class TaskTest < ActiveSupport::TestCase
     assert_not task.valid?
     assert_includes task.errors[:title], "can't be blank"
   end
+
+  test "invalid with title over 255 characters" do
+    task = Task.new(title: "x" * 256, completed: false)
+    assert_not task.valid?
+    assert_includes task.errors[:title], "is too long (maximum is 255 characters)"
+  end
 end

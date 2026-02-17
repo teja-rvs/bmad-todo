@@ -7,7 +7,7 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins "http://localhost:5173" # Vite dev server for bmad-todo-client
+    origins ENV.fetch("CORS_ORIGIN", "http://localhost:5173") # Vite dev; set CORS_ORIGIN in production
 
     resource "*",
       headers: :any,
