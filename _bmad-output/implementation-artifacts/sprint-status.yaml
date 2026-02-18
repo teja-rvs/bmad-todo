@@ -49,7 +49,7 @@ development_status:
   epic-2: in-progress
   2-1-backend-post-tasks-to-create-a-task: done
   2-2-frontend-add-task-flow-and-show-new-task-in-list: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   epic-3: in-progress
   3-1-backend-patch-tasks-id-to-mark-complete: done
