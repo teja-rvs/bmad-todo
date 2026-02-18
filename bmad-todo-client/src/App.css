@@ -50,6 +50,28 @@
   color: #b91c1c;
 }
 
+.error .retry-button {
+  margin-top: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  color: #fefdfb;
+  background: #7a6649;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.error .retry-button:hover {
+  background: #8b7355;
+}
+
+.error .retry-button:focus-visible {
+  outline: 2px solid #8b7355;
+  outline-offset: 2px;
+}
+
 /* Tailwind v4 does not ship sr-only in default theme; same pattern as Tailwind's sr-only for live region. */
 @layer utilities {
   .sr-only {

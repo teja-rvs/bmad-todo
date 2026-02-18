@@ -54,14 +54,14 @@ describe('fetchTasks', () => {
     expect(result).toEqual({ tasks: [] })
   })
 
-  it('throws when response is not ok', async () => {
+  it('throws user-facing message when response is 5xx', async () => {
     ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
     })
 
-    await expect(fetchTasks()).rejects.toThrow('Failed to fetch tasks: 500 Internal Server Error')
+    await expect(fetchTasks()).rejects.toThrow('Service unavailable. Couldn\'t load tasks. Try again.')
   })
 
   it('throws when response is missing tasks array', async () => {
@@ -77,7 +77,13 @@ describe('fetchTasks', () => {
     const abortError = new DOMException('The operation was aborted.', 'AbortError')
     ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(abortError)
 
-    await expect(fetchTasks()).rejects.toThrow('Request timed out. Service may be unavailable.')
+    await expect(fetchTasks()).rejects.toThrow('Service unavailable. Couldn\'t load tasks. Try again.')
+  })
+
+  it('throws user-facing message on network error', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'))
+
+    await expect(fetchTasks()).rejects.toThrow('Service unavailable. Couldn\'t load tasks. Try again.')
   })
 })
 
@@ -244,7 +250,7 @@ describe('updateTask', () => {
     const abortError = new DOMException('The operation was aborted.', 'AbortError')
     ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(abortError)
 
-    await expect(updateTask(1, { completed: true })).rejects.toThrow('Request timed out. Service may be unavailable.')
+    await expect(updateTask(1, { completed: true })).rejects.toThrow(/Service unavailable|Couldn't save|Try again/)
   })
 
   it('throws when 200 response has invalid body (missing id or title)', async () => {

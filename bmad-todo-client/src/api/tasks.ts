@@ -12,9 +12,12 @@ export function getBaseUrl(env?: { VITE_API_URL?: string }): string {
 
 const FETCH_TIMEOUT_MS = 10_000
 
+/** User-facing message when load fails (network, timeout, 5xx) per NFR-R2. */
+export const LOAD_ERROR_MESSAGE = 'Service unavailable. Couldn\'t load tasks. Try again.'
+
 /**
  * Fetches the task list from GET /tasks.
- * Returns { tasks: [] } on empty; throws on network, timeout, or non-2xx.
+ * Returns { tasks: [] } on empty; throws with user-facing message on network, timeout, or 5xx.
  */
 export async function fetchTasks(): Promise<TasksResponse> {
   const baseUrl = getBaseUrl()
@@ -24,7 +27,11 @@ export async function fetchTasks(): Promise<TasksResponse> {
     const res = await fetch(`${baseUrl}/tasks`, { signal: controller.signal })
     clearTimeout(timeoutId)
     if (!res.ok) {
-      throw new Error(`Failed to fetch tasks: ${res.status} ${res.statusText}`)
+      if (res.status >= 500) {
+        throw new Error(LOAD_ERROR_MESSAGE)
+      }
+      // 4xx (e.g. 401, 403, 404): surface user-facing message per NFR-R2
+      throw new Error(LOAD_ERROR_MESSAGE)
     }
     const data = (await res.json()) as TasksResponse
     if (!data || typeof data.tasks === 'undefined') {
@@ -34,13 +41,22 @@ export async function fetchTasks(): Promise<TasksResponse> {
   } catch (err) {
     clearTimeout(timeoutId)
     if (err && typeof err === 'object' && (err as Error).name === 'AbortError') {
-      throw new Error('Request timed out. Service may be unavailable.')
+      throw new Error(LOAD_ERROR_MESSAGE)
     }
-    throw err
+    if (err instanceof Error && err.message === LOAD_ERROR_MESSAGE) {
+      throw err
+    }
+    if (err instanceof Error && err.message.startsWith('Invalid response:')) {
+      throw err
+    }
+    throw new Error(LOAD_ERROR_MESSAGE)
   }
 }
 
 const SAVE_ERROR_MESSAGE = "Couldn't save. Try again."
+
+/** User-facing message for create/update when server or network is unavailable (NFR-R2). */
+export const SAVE_SERVICE_UNAVAILABLE = "Service unavailable. Couldn't save. Try again."
 
 const USER_FACING_MESSAGE = Symbol('userFacingMessage')
 
@@ -74,6 +90,9 @@ export async function createTask(title: string): Promise<Task> {
       }
       return task
     }
+    if (res.status >= 500) {
+      throw new Error(SAVE_SERVICE_UNAVAILABLE)
+    }
     const body = await res.json().catch(() => ({})) as { error?: string; errors?: unknown[] }
     const first = body?.errors?.[0]
     const message =
@@ -90,7 +109,7 @@ export async function createTask(title: string): Promise<Task> {
   } catch (err) {
     clearTimeout(timeoutId)
     if (err && typeof err === 'object' && (err as Error).name === 'AbortError') {
-      throw new Error('Request timed out. Service may be unavailable.')
+      throw new Error(SAVE_SERVICE_UNAVAILABLE)
     }
     if (err && typeof err === 'object' && (err as Error & { [USER_FACING_MESSAGE]?: boolean })[USER_FACING_MESSAGE]) {
       throw err
@@ -132,6 +151,9 @@ export async function updateTask(id: number, payload: { completed: boolean }): P
       }
       return task
     }
+    if (res.status >= 500) {
+      throw new Error(SAVE_SERVICE_UNAVAILABLE)
+    }
     const body = (await res.json().catch(() => ({}))) as { error?: string }
     const message = typeof body?.error === 'string' ? body.error : SAVE_ERROR_MESSAGE
     const userError = new Error(message) as Error & { [USER_FACING_MESSAGE]?: boolean }
@@ -140,7 +162,7 @@ export async function updateTask(id: number, payload: { completed: boolean }): P
   } catch (err) {
     clearTimeout(timeoutId)
     if (err && typeof err === 'object' && (err as Error).name === 'AbortError') {
-      throw new Error('Request timed out. Service may be unavailable.')
+      throw new Error(SAVE_SERVICE_UNAVAILABLE)
     }
     if (err && typeof err === 'object' && (err as Error & { [USER_FACING_MESSAGE]?: boolean })[USER_FACING_MESSAGE]) {
       throw err

@@ -1,7 +1,7 @@
 # Test Automation Summary
 
 **Project:** bmad-todo  
-**Date:** 2026-02-18  
+**Date:** 2026-02-19  
 **Workflow:** Quinn QA – Automate
 
 ## Test Framework
@@ -42,15 +42,15 @@
 | Area | Covered | Notes |
 |------|--------|------|
 | API (Rails) | 25 tests, ~97% line coverage | GET/POST/PATCH /tasks, GET /up, CORS, validation, 404 |
-| API client (tasks.ts) | 21 tests | getBaseUrl, fetchTasks, createTask, updateTask; 2xx/4xx/5xx, timeouts |
-| UI components | 6 files, 81 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
-| E2E user flows | 16 tests | Load list, empty state, error on 500, add task flow, mark complete flow, SPA no-reload, responsive (6), a11y (2) |
+| API client (tasks.ts) | 22 tests | getBaseUrl, fetchTasks, createTask, updateTask; 2xx/4xx/5xx, timeouts |
+| UI components | 6 files, 84 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
+| E2E user flows | 18 tests | Load list, empty state, error on 500/503, Try again, add task flow, mark complete flow, SPA no-reload, responsive (6), a11y (2) |
 
-## Run Results (2026-02-18)
+## Run Results (2026-02-19)
 
 - **Rails:** 25 runs, 98 assertions, 0 failures (line coverage 96.97%)
-- **Vitest:** 6 files, 81 tests passed
-- **Playwright:** 16 tests passed
+- **Vitest:** 6 files, 84 tests passed
+- **Playwright:** 18 tests passed
 
 ## Commands
 
@@ -65,4 +65,4 @@
 
 ---
 
-*Summary updated by Quinn QA – Automate workflow (2026-02-18). All tests re-run and passed. No new tests generated; existing coverage (API, client unit, E2E) is complete for current features. For E2E, ensure port 5173 is free or stop dev server so Playwright can start the web server.*
+*Summary updated by Quinn QA – Automate workflow (2026-02-19). All tests re-run and passed. No new tests generated; existing coverage (API, client unit, E2E) is complete for current features. For E2E, ensure port 5173 is free or stop dev server so Playwright can start the web server.*

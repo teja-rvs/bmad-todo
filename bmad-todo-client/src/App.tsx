@@ -7,9 +7,12 @@ import { EmptyState } from './components/EmptyState'
 import './App.css'
 
 function App() {
+  type FailedAction = 'load' | { type: 'create'; title: string } | { type: 'complete'; id: number; completed: boolean }
+
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastFailedAction, setLastFailedAction] = useState<FailedAction | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [completingId, setCompletingId] = useState<number | null>(null)
   const [liveAnnouncement, setLiveAnnouncement] = useState('')
@@ -21,41 +24,44 @@ function App() {
     return () => window.clearTimeout(id)
   }, [liveAnnouncement])
 
-  useEffect(() => {
-    let cancelled = false
+  const loadTasks = useCallback(() => {
+    setIsLoading(true)
+    setError(null)
+    setLastFailedAction(null)
     fetchTasks()
       .then((res) => {
-        if (!cancelled) {
-          setTasks(res.tasks)
-          setError(null)
-        }
+        setTasks(res.tasks)
+        setError(null)
+        setLastFailedAction(null)
       })
       .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load tasks')
-          setTasks([])
-        }
+        setError(err instanceof Error ? err.message : 'Failed to load tasks')
+        setTasks([])
+        setLastFailedAction('load')
       })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
+      .finally(() => setIsLoading(false))
   }, [])
+
+  useEffect(() => {
+    loadTasks()
+  }, [loadTasks])
 
   // SPA data strategy (AC #2): after create/complete, merge from API response; no full-page reload.
   const handleCreateTask = useCallback(
     (title: string) => {
       setIsSubmitting(true)
       setError(null)
+      setLastFailedAction(null)
       createTask(title)
         .then((created) => {
           setTasks((prev) => [created, ...prev])
           setLiveAnnouncement('Task added')
+          setError(null)
+          setLastFailedAction(null)
         })
         .catch((err) => {
           setError(err instanceof Error ? err.message : "Couldn't save. Try again.")
+          setLastFailedAction({ type: 'create', title })
         })
         .finally(() => {
           setIsSubmitting(false)
@@ -66,6 +72,7 @@ function App() {
 
   const handleCompleteTask = useCallback((id: number, completed: boolean) => {
     setError(null)
+    setLastFailedAction(null)
     setCompletingId(id)
     updateTask(id, { completed })
       .then((updated) => {
@@ -73,14 +80,29 @@ function App() {
           prev.map((t) => (t.id === updated.id ? updated : t))
         )
         setLiveAnnouncement(completed ? 'Task marked complete' : 'Task marked incomplete')
+        setError(null)
+        setLastFailedAction(null)
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Couldn't save. Try again.")
+        setLastFailedAction({ type: 'complete', id, completed })
       })
       .finally(() => {
         setCompletingId(null)
       })
   }, [])
+
+  const handleRetry = useCallback(() => {
+    if (lastFailedAction === null || lastFailedAction === 'load') {
+      loadTasks()
+      return
+    }
+    if (lastFailedAction.type === 'create') {
+      handleCreateTask(lastFailedAction.title)
+      return
+    }
+    handleCompleteTask(lastFailedAction.id, lastFailedAction.completed)
+  }, [lastFailedAction, loadTasks, handleCreateTask, handleCompleteTask])
 
   return (
     <div className="app-container">
@@ -110,9 +132,17 @@ function App() {
             </p>
           )}
           {!isLoading && error && (
-            <p id="app-error" className="error" role="alert">
-              {error}
-            </p>
+            <div id="app-error" className="error" role="alert">
+              <p>{error}</p>
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="retry-button"
+                aria-label="Try again"
+              >
+                Try again
+              </button>
+            </div>
           )}
           {!isLoading && !error && tasks.length === 0 && <EmptyState />}
           {!isLoading && !error && tasks.length > 0 && (

@@ -129,7 +129,26 @@ describe('App', () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Network error')
+      expect(screen.getByRole('alert')).toHaveTextContent(/Service unavailable|Couldn't load tasks|Try again/)
+    })
+  })
+
+  it('shows Try again button when load fails and retry refetches', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: [] }) })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /try again/i }))
+    await waitFor(() => {
+      expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
   })
 
@@ -169,6 +188,39 @@ describe('App', () => {
         body: JSON.stringify({ title: 'New from test' }),
       })
     )
+  })
+
+  it('shows Try again and retries create when create fails (AC #2)', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: [] }) })
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          id: 1,
+          title: 'Retry task',
+          completed: false,
+          created_at: '2026-02-18T12:00:00Z',
+          updated_at: '2026-02-18T12:00:00Z',
+        }),
+      })
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument())
+    await user.type(screen.getByRole('textbox', { name: /new task title/i }), 'Retry task')
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /try again/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Retry task')).toBeInTheDocument()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
   })
 
   it('create task: shows error when create fails', async () => {
@@ -286,6 +338,52 @@ describe('App', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/couldn't save|try again|task not found/i)
+    })
+  })
+
+  it('shows Try again and retries complete when PATCH fails (AC #2)', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const initialTasks = [
+      {
+        id: 1,
+        title: 'Complete retry task',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+    const updatedTask = {
+      id: 1,
+      title: 'Complete retry task',
+      completed: true,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: initialTasks }) })
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => updatedTask,
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Complete retry task')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('checkbox', { name: /complete retry task/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /try again/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox', { name: /complete retry task/i })).toBeChecked()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
   })
 

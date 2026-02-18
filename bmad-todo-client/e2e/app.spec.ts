@@ -10,7 +10,7 @@ test.describe('App', () => {
   test('shows Tasks heading and home screen', async ({ page }) => {
     await page.route('**/tasks', (route) => route.fulfill(emptyTasksResponse()))
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'Tasks' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible()
   })
 
   test('shows add row at top', async ({ page }) => {
@@ -39,6 +39,42 @@ test.describe('App', () => {
     await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
     await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
     await expect(page.getByRole('alert')).toContainText(/unavailable|error|failed/i)
+  })
+
+  test('error feedback: shows user-facing message and Try again button on load failure (AC #1, #2)', async ({ page }) => {
+    await page.route('**/tasks', (route) =>
+      route.fulfill({ status: 503, statusText: 'Service Unavailable', body: '' })
+    )
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('alert')).toContainText(/Service unavailable|Couldn't load tasks|Try again/i)
+    await expect(page.getByRole('button', { name: /try again/i })).toBeVisible()
+  })
+
+  test('error feedback: Try again after load failure refetches and clears error (AC #2)', async ({ page }) => {
+    let getCount = 0
+    await page.route('**/tasks', (route) => {
+      const request = route.request()
+      if (request.method() !== 'GET') return route.continue()
+      getCount += 1
+      // Fail first two GETs so error is shown (handles React Strict Mode); then succeed
+      if (getCount <= 2) {
+        return route.abort('failed')
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ tasks: [] }),
+      })
+    })
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: /try again/i })).toBeVisible()
+    await page.getByRole('button', { name: /try again/i }).click()
+    await expect(page.getByText(/no tasks yet/i)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('alert')).not.toBeVisible()
   })
 
   test('shows task list when API returns tasks', async ({ page }) => {
