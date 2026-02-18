@@ -260,6 +260,205 @@ describe('App', () => {
     })
   })
 
+  it('keyboard: tab order is add input → Add button → task checkboxes (no focus trap)', async () => {
+    const tasks = [
+      {
+        id: 1,
+        title: 'First task',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 2,
+        title: 'Second task',
+        completed: false,
+        created_at: '2026-01-02T00:00:00Z',
+        updated_at: '2026-01-02T00:00:00Z',
+      },
+    ]
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ tasks }),
+    })
+
+    const user = (await import('@testing-library/user-event')).default.setup()
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('list', { name: /task list/i })).toBeInTheDocument()
+    })
+
+    const input = screen.getByRole('textbox', { name: /new task title/i })
+    const addButton = screen.getByRole('button', { name: /add task/i })
+    const firstCheckbox = screen.getByRole('checkbox', { name: /first task/i })
+    const secondCheckbox = screen.getByRole('checkbox', { name: /second task/i })
+
+    await user.tab()
+    expect(document.activeElement).toBe(input)
+    await user.tab()
+    expect(document.activeElement).toBe(addButton)
+    await user.tab()
+    expect(document.activeElement).toBe(firstCheckbox)
+    await user.tab()
+    expect(document.activeElement).toBe(secondCheckbox)
+    await user.tab()
+    expect(document.activeElement).not.toBe(firstCheckbox)
+    expect(document.activeElement).not.toBe(secondCheckbox)
+  })
+
+  it('keyboard: Enter in add input submits; focus remains in input after submit', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: [] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          id: 10,
+          title: 'Keyboard task',
+          completed: false,
+          created_at: '2026-02-18T12:00:00Z',
+          updated_at: '2026-02-18T12:00:00Z',
+        }),
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /new task title/i })).toBeInTheDocument()
+    })
+
+    const input = screen.getByRole('textbox', { name: /new task title/i })
+    await user.click(input)
+    await user.keyboard('Keyboard task{Enter}')
+    await waitFor(() => {
+      expect(screen.getByText('Keyboard task')).toBeInTheDocument()
+    })
+    expect(document.activeElement).toBe(input)
+  })
+
+  it('keyboard: Add button focused, Enter submits when input has value', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: [] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          id: 11,
+          title: 'From button Enter',
+          completed: false,
+          created_at: '2026-02-18T12:00:00Z',
+          updated_at: '2026-02-18T12:00:00Z',
+        }),
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add task/i })).toBeInTheDocument()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: /new task title/i }), 'From button Enter')
+    await user.tab()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: /add task/i }))
+    await user.keyboard('{Enter}')
+    await waitFor(() => {
+      expect(screen.getByText('From button Enter')).toBeInTheDocument()
+    })
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: /new task title/i }))
+  })
+
+  it('keyboard: Space on focused task checkbox toggles completion', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const initialTasks = [
+      {
+        id: 1,
+        title: 'Space task',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+    const updatedTask = {
+      id: 1,
+      title: 'Space task',
+      completed: true,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: initialTasks }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => updatedTask,
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox', { name: /space task/i })).toBeInTheDocument()
+    })
+
+    const checkbox = screen.getByRole('checkbox', { name: /space task/i })
+    await user.click(checkbox)
+    expect(checkbox).toHaveFocus()
+    await user.keyboard(' ')
+    await waitFor(() => {
+      expect(checkbox).toBeChecked()
+    })
+  })
+
+  it('keyboard: Tab to task checkbox then Space toggles completion (no mouse)', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const initialTasks = [
+      {
+        id: 1,
+        title: 'Tab space task',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+    const updatedTask = {
+      id: 1,
+      title: 'Tab space task',
+      completed: true,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: initialTasks }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => updatedTask,
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox', { name: /tab space task/i })).toBeInTheDocument()
+    })
+
+    const input = screen.getByRole('textbox', { name: /new task title/i })
+    const addButton = screen.getByRole('button', { name: /add task/i })
+    const checkbox = screen.getByRole('checkbox', { name: /tab space task/i })
+
+    await user.tab()
+    expect(document.activeElement).toBe(input)
+    await user.tab()
+    expect(document.activeElement).toBe(addButton)
+    await user.tab()
+    expect(document.activeElement).toBe(checkbox)
+    await user.keyboard(' ')
+    await waitFor(() => {
+      expect(checkbox).toBeChecked()
+    })
+  })
+
   it('does not update state after unmount when fetch resolves late', async () => {
     let resolveFetch: (value: { ok: boolean; json: () => Promise<{ tasks: unknown[] }> }) => void
     const fetchPromise = new Promise<{ ok: boolean; json: () => Promise<{ tasks: unknown[] }> }>((resolve) => {

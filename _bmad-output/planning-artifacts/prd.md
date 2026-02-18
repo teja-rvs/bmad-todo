@@ -125,7 +125,7 @@ No other user types (admin, support, API consumer) for this personal-use MVP. Al
 ### Technical Constraints
 
 - **Data storage** — Task data **must be stored on the server** (not browser-only). Persistence is server-backed; the client fetches data from the backend as needed.
-- **Data control** — **User can delete all** their data (e.g. "Delete all tasks" or account/data wipe). No mandatory indefinite retention.
+- **Data control** — User data is user-owned; no mandatory indefinite retention.
 - **Connectivity** — **No offline support** for MVP. App assumes an active connection for loading and updating tasks.
 
 ### Integration Requirements
@@ -200,7 +200,6 @@ bmad-todo is a **single-page web application (SPA)** for personal task managemen
 - Create task (persisted on server, reflected in list after action—no manual refresh)
 - Mark task complete (persisted on server, reflected in list after action—no manual refresh)
 - Empty state: "No tasks" message + Add task button
-- User can delete all their data
 - WCAG 2.1 AA accessibility
 - Responsive layout (desktop and mobile)
 - Support latest major browsers (Chrome, Firefox, Safari, Edge)
@@ -253,23 +252,22 @@ bmad-todo is a **single-page web application (SPA)** for personal task managemen
 
 ### Data Control & Persistence
 
-- **FR16:** User can delete all their task data (e.g. "Delete all" or equivalent).
-- **FR17:** Task data is stored on the server (not browser-only).
-- **FR18:** Task list is loaded from the server when the user opens or refreshes the app (within connectivity constraints).
+- **FR16:** Task data is stored on the server (not browser-only).
+- **FR17:** Task list is loaded from the server when the user opens or refreshes the app (within connectivity constraints).
 
 ### Accessibility & Reach
 
-- **FR19:** User can use the app with keyboard-only interaction for core flows (view list, add task, mark complete).
-- **FR20:** User can use the app with a screen reader (content and actions are exposed and announced appropriately).
-- **FR21:** Visual presentation meets WCAG 2.1 Level AA (e.g. contrast, focus indicators, text alternatives where needed).
-- **FR22:** User can use the app on desktop viewports.
-- **FR23:** User can use the app on mobile viewports (layout and controls are usable).
-- **FR24:** User can use the app in the latest versions of Chrome, Firefox, Safari, and Edge (desktop and mobile where applicable).
+- **FR18:** User can use the app with keyboard-only interaction for core flows (view list, add task, mark complete).
+- **FR19:** User can use the app with a screen reader (content and actions are exposed and announced appropriately).
+- **FR20:** Visual presentation meets WCAG 2.1 Level AA (e.g. contrast, focus indicators, text alternatives where needed).
+- **FR21:** User can use the app on desktop viewports.
+- **FR22:** User can use the app on mobile viewports (layout and controls are usable).
+- **FR23:** User can use the app in the latest versions of Chrome, Firefox, Safari, and Edge (desktop and mobile where applicable).
 
 ### Application Behavior
 
-- **FR25:** The app behaves as a single-page application (core task flows without full-page reloads).
-- **FR26:** The app requires network connectivity for loading and updating tasks (no offline support in MVP).
+- **FR24:** The app behaves as a single-page application (core task flows without full-page reloads).
+- **FR25:** The app requires network connectivity for loading and updating tasks (no offline support in MVP).
 
 ## Non-Functional Requirements
 

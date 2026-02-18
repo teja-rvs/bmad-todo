@@ -82,4 +82,13 @@ describe('TaskRow', () => {
     const title = screen.getByText('Test task')
     expect(title).toHaveClass('text-[#6b8e23]')
   })
+
+  it('checkbox has visible focus indicator (focus-visible ring)', () => {
+    render(<TaskRow task={baseTask} />)
+    const checkbox = screen.getByRole('checkbox', { name: /test task/i })
+    expect(checkbox.className).toMatch(/focus-visible:ring-2/)
+    expect(checkbox.className).toMatch(/focus-visible:ring-\[#8b7355\]/)
+    expect(checkbox.className).toMatch(/focus-visible:ring-offset-2/)
+    expect(checkbox.className).toMatch(/focus:outline-none/)
+  })
 })

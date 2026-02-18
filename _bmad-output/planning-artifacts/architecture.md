@@ -25,9 +25,9 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 - **Empty state:** "No tasks" message and access to add-task from empty state (FR5–FR7).
 - **Task creation:** Add task via one entry point; enter text and confirm; new task appears in list in real time and is persisted on server (FR8–FR12).
 - **Task completion:** Mark complete from the list in one action; list and completion state updated in real time and persisted (FR13–FR15).
-- **Data control & persistence:** User can delete all data; all task data stored on server; list loaded from server on open/refresh (FR16–FR18).
-- **Accessibility & reach:** Keyboard-only and screen-reader support for core flows; WCAG 2.1 AA; usable on desktop and mobile; latest Chrome, Firefox, Safari, Edge (FR19–FR24).
-- **Application behaviour:** SPA (no full-page reloads for core flows); requires network; no offline in MVP (FR25–FR26).
+- **Data control & persistence:** All task data stored on server; list loaded from server on open/refresh (FR16–FR17).
+- **Accessibility & reach:** Keyboard-only and screen-reader support for core flows; WCAG 2.1 AA; usable on desktop and mobile; latest Chrome, Firefox, Safari, Edge (FR18–FR23).
+- **Application behaviour:** SPA (no full-page reloads for core flows); requires network; no offline in MVP (FR24–FR25).
 
 Architecturally this implies: a client SPA, a server API for CRUD and list, a real-time mechanism for list updates, and a single primary view with add-at-top and list (or empty state).
 
@@ -42,7 +42,7 @@ These drive choices for real-time mechanism, client and server performance, and 
 **Scale & Complexity:**
 - Primary domain: Web (full-stack SPA with server-backed API and persistence).
 - Complexity level: Low (single user, single list, narrow feature set).
-- Architectural components: Client SPA, API layer, persistence store, real-time delivery mechanism, optional "delete all" flow.
+- Architectural components: Client SPA, API layer, persistence store, real-time delivery mechanism.
 
 ### Technical Constraints & Dependencies
 
@@ -195,7 +195,7 @@ rails db:migrate
 | Error handling | Consistent JSON error responses and HTTP status codes | Predictable client handling |
 | Rate limiting | None for MVP | Single user |
 
-**API usage pattern:** GET list on load; POST create task then refetch list or append from response; PATCH complete then refetch list or update from response; optional DELETE all endpoint; surface errors (e.g. network/server) in UI.
+**API usage pattern:** GET list on load; POST create task then refetch list or append from response; PATCH complete then refetch list or update from response; surface errors (e.g. network/server) in UI.
 
 ### Frontend Architecture
 
@@ -217,9 +217,9 @@ rails db:migrate
 
 **Implementation sequence:**
 1. Scaffold backend (Rails API + PostgreSQL), create `tasks` table and migrations.
-2. Implement REST endpoints (index, create, update for complete, optional delete_all); CORS for frontend origin.
+2. Implement REST endpoints (index, create, update for complete); CORS for frontend origin.
 3. Scaffold frontend (Vite + React + TypeScript), add Tailwind.
-4. Implement UI: load tasks on mount (GET), create task (POST then update list), mark complete (PATCH then update list), empty state, optional delete all.
+4. Implement UI: load tasks on mount (GET), create task (POST then update list), mark complete (PATCH then update list), empty state.
 5. Wire errors and connectivity feedback (e.g. "service unavailable").
 6. Accessibility pass (keyboard, focus, semantics, contrast).
 
@@ -242,7 +242,7 @@ rails db:migrate
 - **No** camelCase in the database.
 
 **API (Rails controllers, JSON):**
-- **Resource routes:** Plural — `GET /tasks`, `POST /tasks`, `GET /tasks/:id`, `PATCH /tasks/:id`, `DELETE /tasks/:id`. Optional: `DELETE /tasks/destroy_all` or equivalent for delete all.
+- **Resource routes:** Plural — `GET /tasks`, `POST /tasks`, `GET /tasks/:id`, `PATCH /tasks/:id`, `DELETE /tasks/:id`.
 - **Route params:** `:id` (Rails style).
 - **JSON keys:** **snake_case** in request and response bodies (Rails convention; frontend may transform to camelCase if desired).
 - **Query params:** snake_case — e.g. no `userId`.
@@ -265,7 +265,7 @@ rails db:migrate
 
 **Frontend (Vite + React):**
 - **Components:** `src/components/` — e.g. `AddRow.tsx`, `TaskList.tsx`, `TaskRow.tsx`, `EmptyState.tsx`.
-- **API layer:** `src/api/` or `src/services/` — e.g. `tasks.ts` with `fetchTasks`, `createTask`, `updateTask`, `deleteAllTasks`.
+- **API layer:** `src/api/` or `src/services/` — e.g. `tasks.ts` with `fetchTasks`, `createTask`, `updateTask`.
 - **Types:** `src/types/` — e.g. `task.ts` with `Task` interface matching API response (document whether keys are snake_case or camelCase after transform).
 - **Hooks (if any):** `src/hooks/` — e.g. `useTasks.ts`.
 - **Tests:** Co-located `*.test.tsx` / `*.spec.tsx` next to components, or `src/__tests__/`; same for API tests.
@@ -330,7 +330,7 @@ rails db:migrate
 ### Pattern Examples
 
 **Good:**
-- Backend: Use `rails g model Task title:string completed:boolean` (or migration generator); `rails g controller Tasks` (or resource generator); `Task` model and `TasksController` with `index`, `create`, `update`, `destroy_all`; JSON with snake_case. Follow Rails conventions (e.g. strong params, RESTful routes).
+- Backend: Use `rails g model Task title:string completed:boolean` (or migration generator); `rails g controller Tasks` (or resource generator); `Task` model and `TasksController` with `index`, `create`, `update`; JSON with snake_case. Follow Rails conventions (e.g. strong params, RESTful routes).
 - Frontend: Use Vite/React project created via `npm create vite@latest`; add Tailwind via framework-recommended install; `fetchTasks()` returns `Task[]`; after `createTask(title)`, call `fetchTasks()` and set state, or append response; same for `updateTask(id, { completed: true })`. Follow React composition and one-way data flow.
 - Error: Backend `render json: { error: "Title can't be blank" }, status: :unprocessable_entity`; frontend reads `error` or `errors` and shows one message.
 
@@ -382,7 +382,7 @@ bmad-todo-client/
     ├── types/
     │   └── task.ts             # Task interface (match API shape)
     ├── api/
-    │   └── tasks.ts            # fetchTasks, createTask, updateTask, deleteAllTasks
+    │   └── tasks.ts            # fetchTasks, createTask, updateTask
     ├── components/
     │   ├── AddRow.tsx
     │   ├── TaskList.tsx
@@ -437,7 +437,7 @@ bmad-todo-api/
 ### Architectural Boundaries
 
 **API boundaries:**
-- **External (frontend → backend):** REST JSON over HTTPS. Endpoints: `GET /tasks`, `POST /tasks`, `GET /tasks/:id`, `PATCH /tasks/:id`, optional `DELETE /tasks/destroy_all` (or equivalent). CORS allows only frontend origin(s).
+- **External (frontend → backend):** REST JSON over HTTPS. Endpoints: `GET /tasks`, `POST /tasks`, `GET /tasks/:id`, `PATCH /tasks/:id`. CORS allows only frontend origin(s).
 - **Internal (backend):** Controllers → models → database; no internal service layer required for MVP. Single data boundary: PostgreSQL via ActiveRecord.
 
 **Component boundaries:**
@@ -456,9 +456,8 @@ bmad-todo-api/
 | Empty state (FR5–FR7) | `EmptyState.tsx`; conditional in `App` or `TaskList` | — |
 | Task creation (FR8–FR12) | `AddRow.tsx`; `api/tasks.ts` (POST); then refetch/merge | `TasksController#create`; `Task` model |
 | Task completion (FR13–FR15) | `TaskRow.tsx`; `api/tasks.ts` (PATCH); then refetch/merge | `TasksController#update`; `Task` model |
-| Delete all (FR16) | Button/link; `api/tasks.ts` (DELETE); then refetch | `TasksController#destroy_all` (or custom action) |
-| Load on open (FR18) | `App.tsx` useEffect → `fetchTasks()` on mount | `TasksController#index` |
-| Accessibility (FR19–FR21) | All components (semantics, focus, keyboard, ARIA) | — |
+| Load on open (FR17) | `App.tsx` useEffect → `fetchTasks()` on mount | `TasksController#index` |
+| Accessibility (FR18–FR20) | All components (semantics, focus, keyboard, ARIA) | — |
 | Errors / unavailable (NFR-R2) | `api/tasks.ts` + UI message/banner in `App` or layout | Controller error responses; logging |
 
 ### Integration Points
@@ -496,7 +495,7 @@ bmad-todo-api/
 
 ### Requirements Coverage Validation ✅
 
-**Functional requirements coverage:** All FR categories are covered: task list & home (TaskList, TaskRow, GET /tasks), empty state (EmptyState), task creation (AddRow, POST /tasks, refetch/merge), task completion (TaskRow, PATCH /tasks/:id), delete all (DELETE action, api/tasks), load on open (useEffect + fetchTasks), data control & persistence (server storage, CORS), accessibility (components + semantics), application behaviour (SPA, fetch-only). No FR is without an architectural home.
+**Functional requirements coverage:** All FR categories are covered: task list & home (TaskList, TaskRow, GET /tasks), empty state (EmptyState), task creation (AddRow, POST /tasks, refetch/merge), task completion (TaskRow, PATCH /tasks/:id), load on open (useEffect + fetchTasks), data control & persistence (server storage, CORS), accessibility (components + semantics), application behaviour (SPA, fetch-only). No FR is without an architectural home.
 
 **Non-functional requirements coverage:** Performance (NFR-P1–P3): client and server are simple; refetch-after-mutation meets “no manual refresh” and responsiveness targets. Security (NFR-S1–S2): TLS, CORS, encryption at rest noted. Reliability (NFR-R2): error handling and “service unavailable” messaging specified. Accessibility (NFR-A1–A3): WCAG 2.1 AA and patterns documented. No NFR is unaddressed.
 
@@ -512,7 +511,7 @@ bmad-todo-api/
 
 **Critical gaps:** None. Implementation can proceed.
 
-**Important gaps (non-blocking):** (1) Exact Rails route for “delete all” (e.g. `delete 'tasks/destroy_all'` or member collection) can be fixed at implementation. (2) Optional: API base URL config (e.g. single constant or env) is mentioned but could be one explicit line in patterns. (3) Optional: Vitest (or test runner) not in starter; add in first frontend story if desired.
+**Important gaps (non-blocking):** (1) Optional: API base URL config (e.g. single constant or env) is mentioned but could be one explicit line in patterns. (2) Optional: Vitest (or test runner) not in starter; add in first frontend story if desired.
 
 **Nice-to-have:** Deployment, CI/CD, and monitoring deferred by choice. Real-time can be added later if needed.
 
@@ -571,5 +570,5 @@ No critical or important issues found. Optional gaps are minor and can be resolv
 
 **First implementation priority:**
 
-1. **Backend:** `rails new bmad-todo-api --api --database=postgresql` → `cd bmad-todo-api` → `rails db:create` → create `tasks` migration → `rails db:migrate` → implement `TasksController` (index, create, update, destroy_all) and CORS.
+1. **Backend:** `rails new bmad-todo-api --api --database=postgresql` → `cd bmad-todo-api` → `rails db:create` → create `tasks` migration → `rails db:migrate` → implement `TasksController` (index, create, update) and CORS.
 2. **Frontend:** `npm create vite@latest bmad-todo-client -- --template react-ts` → `cd bmad-todo-client` → `npm install` → add Tailwind → implement `src/api/tasks.ts`, `src/types/task.ts`, and components (AddRow, TaskList, TaskRow, EmptyState) in `App.tsx` with fetch-on-load and refetch/merge after mutations.

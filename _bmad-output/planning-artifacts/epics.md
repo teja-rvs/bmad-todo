@@ -31,17 +31,16 @@ FR12: Created tasks are persisted on the server.
 FR13: User can mark a task as complete from the list.
 FR14: User can see the task's completed state update in the list after the action (no manual refresh).
 FR15: Completion state is persisted on the server.
-FR16: User can delete all their task data (e.g. "Delete all" or equivalent).
-FR17: Task data is stored on the server (not browser-only).
-FR18: Task list is loaded from the server when the user opens or refreshes the app (within connectivity constraints).
-FR19: User can use the app with keyboard-only interaction for core flows (view list, add task, mark complete).
-FR20: User can use the app with a screen reader (content and actions are exposed and announced appropriately).
-FR21: Visual presentation meets WCAG 2.1 Level AA (e.g. contrast, focus indicators, text alternatives where needed).
-FR22: User can use the app on desktop viewports.
-FR23: User can use the app on mobile viewports (layout and controls are usable).
-FR24: User can use the app in the latest versions of Chrome, Firefox, Safari, and Edge (desktop and mobile where applicable).
-FR25: The app behaves as a single-page application (core task flows without full-page reloads).
-FR26: The app requires network connectivity for loading and updating tasks (no offline support in MVP).
+FR16: Task data is stored on the server (not browser-only).
+FR17: Task list is loaded from the server when the user opens or refreshes the app (within connectivity constraints).
+FR18: User can use the app with keyboard-only interaction for core flows (view list, add task, mark complete).
+FR19: User can use the app with a screen reader (content and actions are exposed and announced appropriately).
+FR20: Visual presentation meets WCAG 2.1 Level AA (e.g. contrast, focus indicators, text alternatives where needed).
+FR21: User can use the app on desktop viewports.
+FR22: User can use the app on mobile viewports (layout and controls are usable).
+FR23: User can use the app in the latest versions of Chrome, Firefox, Safari, and Edge (desktop and mobile where applicable).
+FR24: The app behaves as a single-page application (core task flows without full-page reloads).
+FR25: The app requires network connectivity for loading and updating tasks (no offline support in MVP).
 
 ### NonFunctional Requirements
 
@@ -61,7 +60,7 @@ NFR-R2: If the server or network is unavailable, the app surfaces a clear indica
 **From Architecture (technical / implementation):**
 
 - **Starter template (Epic 1 Story 1):** Frontend: Vite + React + TypeScript via `npm create vite@latest bmad-todo-client -- --template react-ts`; add Tailwind post-scaffold (`npm install -D tailwindcss postcss autoprefixer`, configure content paths and directives). Backend: Rails API + PostgreSQL via `rails new bmad-todo-api --api --database=postgresql`; `rails db:create` and `rails db:migrate`. Monorepo layout with `bmad-todo-client` and `bmad-todo-api` as sibling directories (or two repos).
-- **API contract:** REST, JSON. Routes: GET /tasks, POST /tasks, GET /tasks/:id, PATCH /tasks/:id, DELETE /tasks/:id; optional DELETE /tasks/destroy_all (or equivalent). JSON keys snake_case; consistent error shape (e.g. `{ error: "message" }` or `{ errors: [...] }`). CORS restricted to frontend origin(s).
+- **API contract:** REST, JSON. Routes: GET /tasks, POST /tasks, GET /tasks/:id, PATCH /tasks/:id, DELETE /tasks/:id. JSON keys snake_case; consistent error shape (e.g. `{ error: "message" }` or `{ errors: [...] }`). CORS restricted to frontend origin(s).
 - **Data model:** Single `tasks` table: id, title, completed, created_at, updated_at. Rails migrations and model validations (e.g. title presence, length).
 - **No real-time channel:** Client loads task list on open/refresh; after create or complete, refetch list or use API response to update UI. No WebSockets, SSE, or polling for MVP.
 - **Naming and structure:** Database and API use snake_case; React components PascalCase, files and variables camelCase. Frontend: `src/components/` (AddRow, TaskList, TaskRow, EmptyState), `src/api/tasks.ts` as sole backend caller, `src/types/task.ts`. Backend: standard Rails (models, controllers, routes).
@@ -72,7 +71,7 @@ NFR-R2: If the server or network is unavailable, the app surfaces a clear indica
 
 - **Design direction:** Warm Minimal + Airy spacing. Palette: e.g. background #fefdfb, text #2c2419, primary #8b7355, completed #6b8e23. Airy spacing: e.g. 20px row padding, 24px gaps, 1.125rem body; min 44px touch targets.
 - **Layout:** Add row at top of main content, above task list; new tasks inserted at top of list. Single view, no tabs or sidebar; single-column, max-width 560–640px on desktop; mobile-first.
-- **Components:** Add Row (single text input e.g. "Add a task…" + Add button); Task List (container for rows or empty state); Task Row (checkbox + label, completed state e.g. strikethrough/check); Empty State ("No tasks yet" + short copy); Delete All optional and secondary (e.g. settings/overflow/footer).
+- **Components:** Add Row (single text input e.g. "Add a task…" + Add button); Task List (container for rows or empty state); Task Row (checkbox + label, completed state e.g. strikethrough/check); Empty State ("No tasks yet" + short copy).
 - **Interaction:** Enter or Add button to submit; one action to mark complete (checkbox); visible focus ring; full keyboard and screen reader support; optional loading state on Add button or list.
 - **Feedback:** Success = task in list / completed state visible; error = inline or banner "Couldn't save. Try again." with retry; no modal for MVP.
 
@@ -93,17 +92,16 @@ FR12: Epic 2 - Created tasks are persisted on the server.
 FR13: Epic 3 - User can mark a task as complete from the list.
 FR14: Epic 3 - User can see the task's completed state update in the list after the action (no manual refresh).
 FR15: Epic 3 - Completion state is persisted on the server.
-FR16: Epic 4 - User can delete all their task data.
-FR17: Epic 1 - Task data is stored on the server (not browser-only).
-FR18: Epic 1 - Task list is loaded from the server when the user opens or refreshes the app.
-FR19: Epic 5 - User can use the app with keyboard-only interaction for core flows.
-FR20: Epic 5 - User can use the app with a screen reader.
-FR21: Epic 5 - Visual presentation meets WCAG 2.1 Level AA.
-FR22: Epic 5 - User can use the app on desktop viewports.
-FR23: Epic 5 - User can use the app on mobile viewports.
-FR24: Epic 5 - User can use the app in latest Chrome, Firefox, Safari, and Edge.
-FR25: Epic 6 - The app behaves as a single-page application (no full-page reloads for core flows).
-FR26: Epic 6 - The app requires network connectivity for loading and updating tasks (no offline in MVP).
+FR16: Epic 1 - Task data is stored on the server (not browser-only).
+FR17: Epic 1 - Task list is loaded from the server when the user opens or refreshes the app.
+FR18: Epic 5 - User can use the app with keyboard-only interaction for core flows.
+FR19: Epic 5 - User can use the app with a screen reader.
+FR20: Epic 5 - Visual presentation meets WCAG 2.1 Level AA.
+FR21: Epic 5 - User can use the app on desktop viewports.
+FR22: Epic 5 - User can use the app on mobile viewports.
+FR23: Epic 5 - User can use the app in latest Chrome, Firefox, Safari, and Edge.
+FR24: Epic 6 - The app behaves as a single-page application (no full-page reloads for core flows).
+FR25: Epic 6 - The app requires network connectivity for loading and updating tasks (no offline in MVP).
 
 ## Epic List
 
@@ -118,10 +116,6 @@ User can add a task (enter text and confirm) and see the new task appear in the 
 ### Epic 3: Complete tasks
 User can mark a task as complete from the list and see the completed state update, persisted on the server.
 **FRs covered:** FR13, FR14, FR15.
-
-### Epic 4: Delete all data
-User can delete all their task data (e.g. "Delete all" or equivalent).
-**FRs covered:** FR16.
 
 ### Epic 5: Accessibility and responsive experience
 User can use the app with keyboard only, with a screen reader, on desktop and mobile, in supported browsers, with visual presentation meeting WCAG 2.1 Level AA.
@@ -247,41 +241,6 @@ So that I can track progress quickly.
 **Then** the frontend sends PATCH /tasks/:id with completed true (or toggled).
 **And** on success, the task row shows the completed state (e.g. strikethrough, check) and the list reflects the update without full-page refresh (refetch or merge from response).
 **And** completion state is persisted on the server (verified by refresh or GET /tasks).
-
----
-
-## Epic 4: Delete all data
-
-User can delete all their task data (e.g. “Delete all” or equivalent).
-
-### Story 4.1: Backend — DELETE all tasks endpoint
-
-As a user,
-I want an endpoint to delete all my tasks,
-So that I can clear my data when I choose.
-
-**Acceptance Criteria:**
-
-**Given** the tasks API exists,
-**When** I implement a delete-all action (e.g. DELETE /tasks/destroy_all or equivalent),
-**Then** all tasks are deleted and the response returns 200 (or 204) with a consistent success or empty body.
-**And** GET /tasks afterward returns an empty array.
-
-### Story 4.2: Frontend — Delete all control and confirmation
-
-As a user,
-I want a way to delete all tasks (e.g. “Delete all” in a secondary place) with a clear confirmation,
-So that I can wipe my data when I want without accidental loss.
-
-**Acceptance Criteria:**
-
-**Given** the app shows the task list,
-**When** I use the “Delete all” (or equivalent) control placed in a secondary area (e.g. settings, overflow, footer),
-**Then** I am prompted to confirm (e.g. confirmation step or dialog).
-**And** when I confirm, the frontend calls the delete-all endpoint and the list becomes empty (refetch or clear state).
-**And** the empty state is shown after deletion.
-
----
 
 ## Epic 5: Accessibility and responsive experience
 

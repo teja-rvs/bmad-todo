@@ -56,13 +56,8 @@ development_status:
   3-2-frontend-mark-task-complete-and-show-updated-state: done
   epic-3-retrospective: done
 
-  epic-4: backlog
-  4-1-backend-delete-all-tasks-endpoint: backlog
-  4-2-frontend-delete-all-control-and-confirmation: backlog
-  epic-4-retrospective: optional
-
-  epic-5: backlog
-  5-1-keyboard-and-focus-full-keyboard-operability: backlog
+  epic-5: in-progress
+  5-1-keyboard-and-focus-full-keyboard-operability: done
   5-2-screen-reader-and-semantics-labels-roles-live-regions: backlog
   5-3-visual-accessibility-wcag-2-1-aa-contrast-and-focus: backlog
   5-4-responsive-layout-desktop-and-mobile-viewports: backlog

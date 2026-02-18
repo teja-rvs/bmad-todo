@@ -86,4 +86,20 @@ describe('AddRow', () => {
     render(<AddRow onSubmit={vi.fn()} isSubmitting />)
     expect(screen.getByRole('button', { name: /add task/i })).toBeDisabled()
   })
+
+  it('input has visible focus ring classes (focus-visible)', () => {
+    render(<AddRow onSubmit={vi.fn()} />)
+    const input = screen.getByRole('textbox', { name: /new task title/i })
+    expect(input.className).toMatch(/focus-visible:ring-2/)
+    expect(input.className).toMatch(/focus-visible:ring-\[#8b7355\]/)
+    expect(input.className).toMatch(/focus-visible:ring-offset-2/)
+  })
+
+  it('Add button has visible focus ring classes (focus-visible)', () => {
+    render(<AddRow onSubmit={vi.fn()} />)
+    const button = screen.getByRole('button', { name: /add task/i })
+    expect(button.className).toMatch(/focus-visible:ring-2/)
+    expect(button.className).toMatch(/focus-visible:ring-\[#8b7355\]/)
+    expect(button.className).toMatch(/focus-visible:ring-offset-2/)
+  })
 })

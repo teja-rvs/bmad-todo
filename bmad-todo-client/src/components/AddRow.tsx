@@ -31,18 +31,19 @@ export function AddRow({ onSubmit, isSubmitting = false, errorDescriptionId }: A
       className="flex gap-3 items-center min-h-[44px] py-2"
       aria-describedby={errorDescriptionId || undefined}
     >
+      {/* Focus ring #8b7355 on #fefdfb meets WCAG 2.1 AA non-text contrast (3:1) for focus indicators. */}
       <input
         ref={inputRef}
         type="text"
         placeholder="Add a task…"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="flex-1 min-h-[44px] px-4 rounded border border-[#8b7355]/40 bg-[#fefdfb] text-[#2c2419] text-[1.125rem] placeholder:text-[#2c2419]/50 focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:ring-offset-2"
+        className="flex-1 min-h-[44px] px-4 rounded border border-[#8b7355]/40 bg-[#fefdfb] text-[#2c2419] text-[1.125rem] placeholder:text-[#2c2419]/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8b7355] focus-visible:ring-offset-2"
         aria-label="New task title"
       />
       <button
         type="submit"
-        className="min-h-[44px] px-5 rounded bg-[#8b7355] text-[#fefdfb] font-medium text-[1.125rem] focus:outline-none focus:ring-2 focus:ring-[#8b7355] focus:ring-offset-2 disabled:opacity-50"
+        className="min-h-[44px] px-5 rounded bg-[#8b7355] text-[#fefdfb] font-medium text-[1.125rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8b7355] focus-visible:ring-offset-2 disabled:opacity-50"
         aria-label="Add task"
         disabled={isSubmitting}
       >
