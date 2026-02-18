@@ -104,6 +104,68 @@ describe('App', () => {
     })
   })
 
+  it('create task: new task appears at top of list', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: [] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          id: 10,
+          title: 'New from test',
+          completed: false,
+          created_at: '2026-02-18T12:00:00Z',
+          updated_at: '2026-02-18T12:00:00Z',
+        }),
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: /new task title/i }), 'New from test')
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('New from test')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('list', { name: /task list/i })).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/tasks$/),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ title: 'New from test' }),
+      })
+    )
+  })
+
+  it('create task: shows error when create fails', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: [] }) })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 422,
+        json: async () => ({ error: "Title can't be blank" }),
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /new task title/i })).toBeInTheDocument()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: /new task title/i }), 'Bad')
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/couldn't save|try again|title can't be blank/i)
+    })
+  })
+
   it('does not update state after unmount when fetch resolves late', async () => {
     let resolveFetch: (value: { ok: boolean; json: () => Promise<{ tasks: unknown[] }> }) => void
     const fetchPromise = new Promise<{ ok: boolean; json: () => Promise<{ tasks: unknown[] }> }>((resolve) => {

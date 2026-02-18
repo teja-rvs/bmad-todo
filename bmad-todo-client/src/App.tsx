@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { fetchTasks } from './api/tasks'
+import { useState, useEffect, useCallback } from 'react'
+import { fetchTasks, createTask } from './api/tasks'
 import type { Task } from './types/task'
 import { AddRow } from './components/AddRow'
 import { TaskList } from './components/TaskList'
@@ -10,6 +10,7 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -34,13 +35,35 @@ function App() {
     }
   }, [])
 
+  const handleCreateTask = useCallback(
+    (title: string) => {
+      setIsSubmitting(true)
+      setError(null)
+      createTask(title)
+        .then((created) => {
+          setTasks((prev) => [created, ...prev])
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : "Couldn't save. Try again.")
+        })
+        .finally(() => {
+          setIsSubmitting(false)
+        })
+    },
+    []
+  )
+
   return (
     <div className="app-container">
       <header className="app-header">
         <h1 className="app-title">Tasks</h1>
       </header>
       <main className="app-main">
-        <AddRow />
+        <AddRow
+          onSubmit={handleCreateTask}
+          isSubmitting={isSubmitting}
+          errorDescriptionId={error ? 'app-error' : undefined}
+        />
         <div className="app-content">
           {isLoading && (
             <p className="loading" role="status" aria-live="polite" aria-label="Loading">
@@ -48,7 +71,7 @@ function App() {
             </p>
           )}
           {!isLoading && error && (
-            <p className="error" role="alert">
+            <p id="app-error" className="error" role="alert">
               {error}
             </p>
           )}
