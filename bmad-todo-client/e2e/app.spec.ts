@@ -31,6 +31,16 @@ test.describe('App', () => {
     await expect(emptyOrList.or(errorAlert)).toBeVisible({ timeout: 2000 })
   })
 
+  test('shows error when API returns 500', async ({ page }) => {
+    await page.route('**/tasks', (route) =>
+      route.fulfill({ status: 500, statusText: 'Internal Server Error', body: '' })
+    )
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('alert')).toContainText(/unavailable|error|failed/i)
+  })
+
   test('shows task list when API returns tasks', async ({ page }) => {
     await page.route('**/tasks', (route) => {
       route.fulfill({

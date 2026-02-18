@@ -95,7 +95,7 @@ describe('App', () => {
     })
   })
 
-  it('has no axe accessibility violations (form labels, list structure, live region)', async () => {
+  it('has no axe accessibility violations (WCAG 2.1 AA: form labels, list structure, live region, contrast)', async () => {
     const tasks = [
       {
         id: 1,
@@ -117,7 +117,9 @@ describe('App', () => {
       expect(screen.getByRole('status', { name: /live announcements/i })).toBeInTheDocument()
     })
 
-    const results = await axe(container)
+    const results = await axe(container, {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa'] },
+    })
     expect(results.violations).toHaveLength(0)
   })
 

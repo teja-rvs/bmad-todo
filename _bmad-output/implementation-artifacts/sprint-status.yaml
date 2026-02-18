@@ -59,7 +59,7 @@ development_status:
   epic-5: in-progress
   5-1-keyboard-and-focus-full-keyboard-operability: done
   5-2-screen-reader-and-semantics-labels-roles-live-regions: done
-  5-3-visual-accessibility-wcag-2-1-aa-contrast-and-focus: backlog
+  5-3-visual-accessibility-wcag-2-1-aa-contrast-and-focus: done
   5-4-responsive-layout-desktop-and-mobile-viewports: backlog
   epic-5-retrospective: optional
 

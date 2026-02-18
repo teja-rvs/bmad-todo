@@ -77,10 +77,10 @@ describe('TaskRow', () => {
     expect(checkbox).toBeDisabled()
   })
 
-  it('applies completed color (#6b8e23) when task is completed', () => {
+  it('applies completed color (#556b1c, WCAG AA contrast) when task is completed', () => {
     render(<TaskRow task={{ ...baseTask, completed: true }} />)
     const title = screen.getByText('Test task')
-    expect(title).toHaveClass('text-[#6b8e23]')
+    expect(title).toHaveClass('text-[#556b1c]')
   })
 
   it('checkbox has visible focus indicator (focus-visible ring)', () => {
@@ -90,5 +90,11 @@ describe('TaskRow', () => {
     expect(checkbox.className).toMatch(/focus-visible:ring-\[#8b7355\]/)
     expect(checkbox.className).toMatch(/focus-visible:ring-offset-2/)
     expect(checkbox.className).toMatch(/focus:outline-none/)
+  })
+
+  it('checkbox uses WCAG AA accent color (#556b1c, non-text 3:1)', () => {
+    render(<TaskRow task={baseTask} />)
+    const checkbox = screen.getByRole('checkbox', { name: /test task/i })
+    expect(checkbox.className).toMatch(/accent-\[#556b1c\]/)
   })
 })

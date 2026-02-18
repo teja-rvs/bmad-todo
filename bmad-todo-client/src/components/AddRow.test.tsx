@@ -14,7 +14,7 @@ describe('AddRow', () => {
     expect(screen.getByRole('button', { name: /add task/i })).toBeInTheDocument()
   })
 
-  it('renders input with aria-label for accessibility', () => {
+  it('renders input with accessible name from visible label', () => {
     render(<AddRow onSubmit={vi.fn()} />)
     expect(screen.getByRole('textbox', { name: /new task title/i })).toBeInTheDocument()
   })
@@ -93,6 +93,13 @@ describe('AddRow', () => {
     expect(input.className).toMatch(/focus-visible:ring-2/)
     expect(input.className).toMatch(/focus-visible:ring-\[#8b7355\]/)
     expect(input.className).toMatch(/focus-visible:ring-offset-2/)
+  })
+
+  it('input has WCAG AA border and placeholder contrast (non-text 3:1, text 4.5:1)', () => {
+    render(<AddRow onSubmit={vi.fn()} />)
+    const input = screen.getByRole('textbox', { name: /new task title/i })
+    expect(input.className).toMatch(/border-\[#8b7355\]/)
+    expect(input.className).toMatch(/placeholder:text-\[#5a5147\]/)
   })
 
   it('Add button has visible focus ring classes (focus-visible)', () => {

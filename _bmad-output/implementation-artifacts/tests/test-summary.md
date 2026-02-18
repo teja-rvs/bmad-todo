@@ -34,7 +34,8 @@
 
 ### E2E Tests (Playwright)
 
-- [x] `bmad-todo-client/e2e/app.spec.ts` – Tasks heading, add row visibility, content area (empty/list/error), task list from API, add-task flow, mark-complete flow (user toggles task complete and sees updated state)
+- [x] `bmad-todo-client/e2e/app.spec.ts` – Tasks heading, add row visibility, content area (empty/list/error), **shows error when API returns 500**, task list from API, add-task flow, mark-complete flow
+- [x] `bmad-todo-client/e2e/a11y.spec.ts` – axe WCAG 2.1 AA (contrast, focus, semantics); empty list and list with completed task
 
 ## Coverage
 
@@ -42,14 +43,14 @@
 |------|--------|--------|
 | API (Rails) | 25 tests, ~97% line coverage | GET/POST/PATCH /tasks, GET /up, CORS, validation, 404 |
 | API client (tasks.ts) | 21 tests | getBaseUrl, fetchTasks, createTask, updateTask; 2xx/4xx/5xx, timeouts |
-| UI components | 6 files, 72 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
-| E2E user flows | 6 tests | Load list, empty state, add task flow, mark complete flow |
+| UI components | 6 files, 75 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
+| E2E user flows | 9 tests | Load list, empty state, error on 500, add task flow, mark complete flow, a11y (2) |
 
 ## Run Results (2026-02-18)
 
 - **Rails:** 25 runs, 98 assertions, 0 failures
-- **Vitest:** 6 files, 72 tests passed
-- **Playwright:** 6 tests passed
+- **Vitest:** 6 files, 75 tests passed
+- **Playwright:** 9 tests passed
 
 ## Commands
 
