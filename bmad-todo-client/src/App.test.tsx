@@ -166,6 +166,100 @@ describe('App', () => {
     })
   })
 
+  it('mark complete: PATCH called and list updates without refresh', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const initialTasks = [
+      {
+        id: 1,
+        title: 'First task',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 2,
+        title: 'Second task',
+        completed: false,
+        created_at: '2026-01-02T00:00:00Z',
+        updated_at: '2026-01-02T00:00:00Z',
+      },
+    ]
+    const updatedFirst = {
+      id: 1,
+      title: 'First task',
+      completed: true,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: initialTasks }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => updatedFirst,
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('First task')).toBeInTheDocument()
+      expect(screen.getByText('Second task')).toBeInTheDocument()
+    })
+
+    const firstCheckbox = screen.getByRole('checkbox', { name: /first task/i })
+    await user.click(firstCheckbox)
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/tasks\/1$/),
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ completed: true }),
+        })
+      )
+    })
+    await waitFor(() => {
+      const firstTitle = screen.getByText('First task')
+      expect(firstTitle).toHaveClass('line-through')
+    })
+  })
+
+  it('mark complete: shows error when PATCH fails', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          tasks: [
+            {
+              id: 1,
+              title: 'Only task',
+              completed: false,
+              created_at: '2026-01-01T00:00:00Z',
+              updated_at: '2026-01-01T00:00:00Z',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: 'Task not found' }),
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Only task')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('checkbox', { name: /only task/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/couldn't save|try again|task not found/i)
+    })
+  })
+
   it('does not update state after unmount when fetch resolves late', async () => {
     let resolveFetch: (value: { ok: boolean; json: () => Promise<{ tasks: unknown[] }> }) => void
     const fetchPromise = new Promise<{ ok: boolean; json: () => Promise<{ tasks: unknown[] }> }>((resolve) => {

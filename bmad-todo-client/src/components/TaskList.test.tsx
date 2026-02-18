@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { TaskList } from './TaskList'
 
 const tasks = [
@@ -37,5 +38,22 @@ describe('TaskList', () => {
     expect(list).toBeInTheDocument()
     const items = list.querySelectorAll('li')
     expect(items).toHaveLength(2)
+  })
+
+  it('passes onComplete to each TaskRow when provided', async () => {
+    const user = userEvent.setup()
+    const onComplete = vi.fn()
+    render(<TaskList tasks={tasks} onComplete={onComplete} />)
+    const firstCheckbox = screen.getByRole('checkbox', { name: /first task/i })
+    await user.click(firstCheckbox)
+    expect(onComplete).toHaveBeenCalledWith(1, true)
+  })
+
+  it('passes isCompleting to TaskRow when completingId matches task id', () => {
+    render(<TaskList tasks={tasks} onComplete={vi.fn()} completingId={1} />)
+    const firstCheckbox = screen.getByRole('checkbox', { name: /first task/i })
+    expect(firstCheckbox).toBeDisabled()
+    const secondCheckbox = screen.getByRole('checkbox', { name: /second task/i })
+    expect(secondCheckbox).not.toBeDisabled()
   })
 })

@@ -22,34 +22,34 @@
 
 ### Client API Layer (Vitest)
 
-- [x] `bmad-todo-client/src/api/tasks.test.ts` – `getBaseUrl`, `fetchTasks`, `createTask` (status codes, response shape, errors, timeout)
+- [x] `bmad-todo-client/src/api/tasks.test.ts` – `getBaseUrl`, `fetchTasks`, `createTask`, `updateTask` (status codes, response shape, errors, timeout)
 
 ### Client Unit (Components & App)
 
 - [x] `bmad-todo-client/src/App.test.tsx` – App load, empty state, task list, add row, error handling
 - [x] `bmad-todo-client/src/components/AddRow.test.tsx` – AddRow render, submit (Enter/button), trim, empty submit, clear input, disabled when submitting
 - [x] `bmad-todo-client/src/components/TaskList.test.tsx` – TaskList empty list, task titles, list semantics
-- [x] `bmad-todo-client/src/components/TaskRow.test.tsx` – TaskRow display, strikethrough for completed
+- [x] `bmad-todo-client/src/components/TaskRow.test.tsx` – TaskRow display, strikethrough for completed, checkbox, onComplete
 - [x] `bmad-todo-client/src/components/EmptyState.test.tsx` – EmptyState display
 
 ### E2E Tests (Playwright)
 
-- [x] `bmad-todo-client/e2e/app.spec.ts` – Tasks heading, add row visibility, content area (empty/list/error), task list from API, add-task flow (user adds a task and sees it in the list)
+- [x] `bmad-todo-client/e2e/app.spec.ts` – Tasks heading, add row visibility, content area (empty/list/error), task list from API, add-task flow, mark-complete flow (user toggles task complete and sees updated state)
 
 ## Coverage
 
 | Area | Covered | Notes |
 |------|--------|--------|
-| API (Rails) | 21 tests, ~97% line coverage | GET/POST/PATCH /tasks, GET /up, CORS, validation, 404 |
-| API client (tasks.ts) | 14 tests | GET/POST, 2xx/4xx/5xx, timeouts, response structure |
-| UI components | 6 files, 29 tests | App, AddRow, TaskList, TaskRow, EmptyState |
-| E2E user flows | 5 tests | Load list, empty state, add task flow |
+| API (Rails) | 25 tests, ~97% line coverage | GET/POST/PATCH /tasks, GET /up, CORS, validation, 404 |
+| API client (tasks.ts) | 20 tests | getBaseUrl, fetchTasks, createTask, updateTask; 2xx/4xx/5xx, timeouts |
+| UI components | 6 files, 57 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
+| E2E user flows | 6 tests | Load list, empty state, add task flow, mark complete flow |
 
 ## Run Results (2026-02-18)
 
-- **Rails:** 21 runs, 84 assertions, 0 failures
-- **Vitest:** 6 files, 43 tests passed
-- **Playwright:** 5 tests passed
+- **Rails:** 25 runs, 98 assertions, 0 failures
+- **Vitest:** 6 files, 57 tests passed
+- **Playwright:** 6 tests passed
 
 ## Commands
 
@@ -60,7 +60,6 @@
 ## Next Steps
 
 - Run tests in CI (e.g. API and unit on every PR, E2E on main or nightly).
-- When “mark task complete” (toggle) is added to the UI, add E2E for that flow and unit tests for `updateTask` in the client API layer.
 - For risk-based strategy, test design planning, or NFR quality gates, consider the Test Architect (TEA) module.
 
 ---

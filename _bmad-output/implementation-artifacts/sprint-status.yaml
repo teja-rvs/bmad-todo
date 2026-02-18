@@ -53,7 +53,7 @@ development_status:
 
   epic-3: in-progress
   3-1-backend-patch-tasks-id-to-mark-complete: done
-  3-2-frontend-mark-task-complete-and-show-updated-state: backlog
+  3-2-frontend-mark-task-complete-and-show-updated-state: done
   epic-3-retrospective: optional
 
   epic-4: backlog

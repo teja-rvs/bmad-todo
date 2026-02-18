@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { fetchTasks, getBaseUrl, createTask } from './tasks'
+import { fetchTasks, getBaseUrl, createTask, updateTask } from './tasks'
 
 describe('getBaseUrl', () => {
   it('throws when VITE_API_URL is not set (empty string)', () => {
@@ -151,5 +151,109 @@ describe('createTask', () => {
     })
 
     await expect(createTask('Task')).rejects.toThrow('Title is too long')
+  })
+})
+
+describe('updateTask', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('PATCHes to /tasks/:id with body { completed } and returns updated task on 200', async () => {
+    const updated = {
+      id: 1,
+      title: 'Task one',
+      completed: true,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => updated,
+    })
+
+    const result = await updateTask(1, { completed: true })
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/tasks\/1$/),
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ completed: true }),
+      })
+    )
+    expect(result).toEqual(updated)
+  })
+
+  it('sends completed: false when toggling to incomplete', async () => {
+    const updated = {
+      id: 2,
+      title: 'Task two',
+      completed: false,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => updated,
+    })
+
+    await updateTask(2, { completed: false })
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/tasks\/2$/),
+      expect.objectContaining({
+        body: JSON.stringify({ completed: false }),
+      })
+    )
+  })
+
+  it('throws with clear message on 404 (reads error from JSON)', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: async () => ({ error: 'Task not found' }),
+    })
+
+    await expect(updateTask(999, { completed: true })).rejects.toThrow('Task not found')
+  })
+
+  it('throws with clear message on 4xx/5xx', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+    })
+
+    await expect(updateTask(1, { completed: true })).rejects.toThrow(/Couldn't save|Try again/)
+  })
+
+  it('throws with clear message on network error', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'))
+
+    await expect(updateTask(1, { completed: true })).rejects.toThrow(/Couldn't save|Try again/)
+  })
+
+  it('throws user-friendly error when request times out (AbortError)', async () => {
+    const abortError = new DOMException('The operation was aborted.', 'AbortError')
+    ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(abortError)
+
+    await expect(updateTask(1, { completed: true })).rejects.toThrow('Request timed out. Service may be unavailable.')
+  })
+
+  it('throws when 200 response has invalid body (missing id or title)', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: 1 }),
+    })
+
+    await expect(updateTask(1, { completed: true })).rejects.toThrow(/Couldn't save|Try again/)
   })
 })

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchTasks, createTask } from './api/tasks'
+import { fetchTasks, createTask, updateTask } from './api/tasks'
 import type { Task } from './types/task'
 import { AddRow } from './components/AddRow'
 import { TaskList } from './components/TaskList'
@@ -11,6 +11,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [completingId, setCompletingId] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -53,6 +54,23 @@ function App() {
     []
   )
 
+  const handleCompleteTask = useCallback((id: number, completed: boolean) => {
+    setError(null)
+    setCompletingId(id)
+    updateTask(id, { completed })
+      .then((updated) => {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === updated.id ? updated : t))
+        )
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Couldn't save. Try again.")
+      })
+      .finally(() => {
+        setCompletingId(null)
+      })
+  }, [])
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -76,7 +94,9 @@ function App() {
             </p>
           )}
           {!isLoading && !error && tasks.length === 0 && <EmptyState />}
-          {!isLoading && !error && tasks.length > 0 && <TaskList tasks={tasks} />}
+          {!isLoading && !error && tasks.length > 0 && (
+            <TaskList tasks={tasks} onComplete={handleCompleteTask} completingId={completingId} />
+          )}
         </div>
       </main>
     </div>

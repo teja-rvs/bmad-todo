@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { TaskRow } from './TaskRow'
 
@@ -31,5 +31,55 @@ describe('TaskRow', () => {
     render(<TaskRow task={baseTask} />)
     const li = screen.getByText('Test task').closest('li')
     expect(li).toBeInTheDocument()
+  })
+
+  it('renders a real checkbox that is unchecked when task is incomplete', () => {
+    render(<TaskRow task={baseTask} />)
+    const checkbox = screen.getByRole('checkbox', { name: /test task/i })
+    expect(checkbox).toBeInTheDocument()
+    expect(checkbox).not.toBeChecked()
+  })
+
+  it('renders checkbox checked when task is completed', () => {
+    render(<TaskRow task={{ ...baseTask, completed: true }} />)
+    const checkbox = screen.getByRole('checkbox', { name: /test task/i })
+    expect(checkbox).toBeChecked()
+  })
+
+  it('calls onComplete with task id and toggled completed when checkbox is changed', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const onComplete = vi.fn()
+    render(<TaskRow task={baseTask} onComplete={onComplete} />)
+    const checkbox = screen.getByRole('checkbox', { name: /test task/i })
+    await user.click(checkbox)
+    expect(onComplete).toHaveBeenCalledTimes(1)
+    expect(onComplete).toHaveBeenCalledWith(1, true)
+  })
+
+  it('calls onComplete with completed false when unchecking a completed task', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const onComplete = vi.fn()
+    render(<TaskRow task={{ ...baseTask, completed: true }} onComplete={onComplete} />)
+    const checkbox = screen.getByRole('checkbox', { name: /test task/i })
+    await user.click(checkbox)
+    expect(onComplete).toHaveBeenCalledWith(1, false)
+  })
+
+  it('has minimum 44px touch target (row has min-h-[44px] class)', () => {
+    render(<TaskRow task={baseTask} />)
+    const li = screen.getByRole('listitem')
+    expect(li.className).toMatch(/min-h-\[44px\]/)
+  })
+
+  it('disables checkbox when isCompleting is true', () => {
+    render(<TaskRow task={baseTask} onComplete={vi.fn()} isCompleting />)
+    const checkbox = screen.getByRole('checkbox', { name: /test task/i })
+    expect(checkbox).toBeDisabled()
+  })
+
+  it('applies completed color (#6b8e23) when task is completed', () => {
+    render(<TaskRow task={{ ...baseTask, completed: true }} />)
+    const title = screen.getByText('Test task')
+    expect(title).toHaveClass('text-[#6b8e23]')
   })
 })

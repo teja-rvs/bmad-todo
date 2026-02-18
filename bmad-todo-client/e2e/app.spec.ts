@@ -93,4 +93,58 @@ test.describe('App', () => {
     await expect(page.getByText('My new E2E task')).toBeVisible({ timeout: 5000 })
     await expect(page.getByRole('list', { name: /task list/i })).toBeVisible()
   })
+
+  test('mark complete flow: user can toggle task complete and see updated state', async ({ page }) => {
+    const task = {
+      id: 1,
+      title: 'Task to complete',
+      completed: false,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    }
+    let completedState = false
+
+    await page.route(/\/tasks(\/\d+)?$/, (route) => {
+      const request = route.request()
+      const url = request.url().replace(/\?.*/, '')
+      if (request.method() === 'GET' && url.endsWith('/tasks')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            tasks: [{ ...task, completed: completedState }],
+          }),
+        })
+      }
+      if (request.method() === 'PATCH' && /\/tasks\/1$/.test(url)) {
+        const body = request.postDataJSON() as { completed?: boolean }
+        completedState = body?.completed ?? true
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...task,
+            completed: completedState,
+            updated_at: new Date().toISOString(),
+          }),
+        })
+      }
+      return route.continue()
+    })
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('list', { name: /task list/i })).toBeVisible()
+    await expect(page.getByText('Task to complete')).toBeVisible()
+
+    const checkbox = page.getByRole('checkbox', { name: 'Task to complete' })
+    await expect(checkbox).not.toBeChecked()
+    await checkbox.click()
+
+    await expect(checkbox).toBeChecked({ timeout: 5000 })
+    await expect(page.getByText('Task to complete')).toBeVisible()
+
+    // Toggle back to incomplete: persistence and list reflect state
+    await checkbox.click()
+    await expect(checkbox).not.toBeChecked({ timeout: 5000 })
+  })
 })
