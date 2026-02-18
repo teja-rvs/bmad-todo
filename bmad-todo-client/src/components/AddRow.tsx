@@ -25,21 +25,26 @@ export function AddRow({ onSubmit, isSubmitting = false, errorDescriptionId }: A
     [value, onSubmit]
   )
 
+  const inputId = 'add-task-input'
   return (
     <form
       onSubmit={handleSubmit}
       className="flex gap-3 items-center min-h-[44px] py-2"
       aria-describedby={errorDescriptionId || undefined}
     >
+      {/* Visible label ensures accessible name without relying on placeholder alone (AC #1). */}
+      <label htmlFor={inputId} className="text-[1.125rem] text-[#2c2419] shrink-0">
+        New task title
+      </label>
       {/* Focus ring #8b7355 on #fefdfb meets WCAG 2.1 AA non-text contrast (3:1) for focus indicators. */}
       <input
         ref={inputRef}
+        id={inputId}
         type="text"
         placeholder="Add a task…"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         className="flex-1 min-h-[44px] px-4 rounded border border-[#8b7355]/40 bg-[#fefdfb] text-[#2c2419] text-[1.125rem] placeholder:text-[#2c2419]/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8b7355] focus-visible:ring-offset-2"
-        aria-label="New task title"
       />
       <button
         type="submit"

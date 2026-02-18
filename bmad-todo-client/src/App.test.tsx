@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { axe } from 'vitest-axe'
 import App from './App'
 
 describe('App', () => {
@@ -92,6 +93,32 @@ describe('App', () => {
       expect(screen.getByRole('textbox', { name: /new task title/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /add task/i })).toBeInTheDocument()
     })
+  })
+
+  it('has no axe accessibility violations (form labels, list structure, live region)', async () => {
+    const tasks = [
+      {
+        id: 1,
+        title: 'A11y task',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ tasks }),
+    })
+
+    const { container } = render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('list', { name: /task list/i })).toBeInTheDocument()
+      expect(screen.getByRole('status', { name: /live announcements/i })).toBeInTheDocument()
+    })
+
+    const results = await axe(container)
+    expect(results.violations).toHaveLength(0)
   })
 
   it('shows error message when fetch fails', async () => {
@@ -456,6 +483,117 @@ describe('App', () => {
     await user.keyboard(' ')
     await waitFor(() => {
       expect(checkbox).toBeChecked()
+    })
+  })
+
+  it('announces when task is added (live region)', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: [] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          id: 10,
+          title: 'Announced task',
+          completed: false,
+          created_at: '2026-02-18T12:00:00Z',
+          updated_at: '2026-02-18T12:00:00Z',
+        }),
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /new task title/i })).toBeInTheDocument()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: /new task title/i }), 'Announced task')
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+
+    await waitFor(() => {
+      const liveRegion = screen.getByRole('status', { name: /live announcements/i })
+      expect(liveRegion).toHaveTextContent('Task added')
+    })
+  })
+
+  it('announces when task is marked complete (live region)', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const initialTasks = [
+      {
+        id: 1,
+        title: 'Complete me',
+        completed: false,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+    const updatedTask = {
+      id: 1,
+      title: 'Complete me',
+      completed: true,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: initialTasks }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => updatedTask,
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox', { name: /complete me/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('checkbox', { name: /complete me/i }))
+
+    await waitFor(() => {
+      const liveRegion = screen.getByRole('status', { name: /live announcements/i })
+      expect(liveRegion).toHaveTextContent('Task marked complete')
+    })
+  })
+
+  it('announces when task is marked incomplete (live region)', async () => {
+    const user = (await import('@testing-library/user-event')).default.setup()
+    const initialTasks = [
+      {
+        id: 1,
+        title: 'Uncomplete me',
+        completed: true,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+    const updatedTask = {
+      id: 1,
+      title: 'Uncomplete me',
+      completed: false,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-02-18T12:00:00Z',
+    }
+    ;(fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ tasks: initialTasks }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => updatedTask,
+      })
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox', { name: /uncomplete me/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('checkbox', { name: /uncomplete me/i }))
+
+    await waitFor(() => {
+      const liveRegion = screen.getByRole('status', { name: /live announcements/i })
+      expect(liveRegion).toHaveTextContent('Task marked incomplete')
     })
   })
 

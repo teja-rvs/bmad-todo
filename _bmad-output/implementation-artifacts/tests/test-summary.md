@@ -42,13 +42,13 @@
 |------|--------|--------|
 | API (Rails) | 25 tests, ~97% line coverage | GET/POST/PATCH /tasks, GET /up, CORS, validation, 404 |
 | API client (tasks.ts) | 21 tests | getBaseUrl, fetchTasks, createTask, updateTask; 2xx/4xx/5xx, timeouts |
-| UI components | 6 files, 68 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
+| UI components | 6 files, 72 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
 | E2E user flows | 6 tests | Load list, empty state, add task flow, mark complete flow |
 
 ## Run Results (2026-02-18)
 
 - **Rails:** 25 runs, 98 assertions, 0 failures
-- **Vitest:** 6 files, 68 tests passed
+- **Vitest:** 6 files, 72 tests passed
 - **Playwright:** 6 tests passed
 
 ## Commands

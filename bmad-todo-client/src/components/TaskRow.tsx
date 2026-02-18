@@ -13,7 +13,7 @@ export function TaskRow({ task, onComplete, isCompleting }: TaskRowProps) {
   }
 
   return (
-    <li className="flex items-center gap-3 py-5 min-h-[44px]">
+    <li className="flex items-center gap-3 py-5 min-h-[44px]" role="listitem">
       <label className={`flex items-center gap-3 min-h-[44px] flex-1 ${isCompleting ? 'cursor-wait' : 'cursor-pointer'}`}>
         {/* Focus ring #8b7355 on #fefdfb meets WCAG 2.1 AA non-text contrast (3:1) for focus indicators. */}
         <input
