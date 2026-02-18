@@ -1,13 +1,19 @@
-/* Warm Minimal + Airy layout (AC #4) */
+/* Warm Minimal + Airy layout. Mobile-first responsive (Story 5.4): 320px+ single-column, max 560–640px centered on desktop. */
 .app-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 40rem; /* 640px, UX spec 560–640px */
   margin: 0 auto;
   min-height: 100vh;
   background: #fefdfb;
   color: #2c2419;
-  padding: 24px;
+  padding: 1.25rem; /* 20px mobile, UX row padding */
   box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    padding: 1.5rem; /* 24px desktop, airy spacing */
+  }
 }
 
 .app-header {
@@ -25,10 +31,12 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 .app-content {
   min-height: 120px;
+  min-width: 0;
 }
 
 .loading,

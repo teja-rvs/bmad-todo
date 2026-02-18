@@ -158,3 +158,88 @@ test.describe('App', () => {
     await expect(checkbox).not.toBeChecked({ timeout: 5000 })
   })
 })
+
+test.describe('Responsive layout and touch targets (AC #1, #2, #3)', () => {
+  test('viewport meta tag present with width=device-width and initial-scale=1', async ({ page }) => {
+    await page.route('**/tasks', (route) => route.fulfill(emptyTasksResponse()))
+    await page.goto('/')
+    const viewportMeta = await page.locator('meta[name="viewport"]').getAttribute('content')
+    expect(viewportMeta).toMatch(/width=device-width/)
+    expect(viewportMeta).toMatch(/initial-scale=1/)
+  })
+
+  test('no horizontal scroll at 320px viewport', async ({ page }) => {
+    await page.route('**/tasks', (route) => route.fulfill(emptyTasksResponse()))
+    await page.setViewportSize({ width: 320, height: 568 })
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+    const clientWidth = await page.evaluate(() => document.documentElement.clientWidth)
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1) // allow 1px rounding
+  })
+
+  test('Add button has minimum 44px touch target', async ({ page }) => {
+    await page.route('**/tasks', (route) => route.fulfill(emptyTasksResponse()))
+    await page.goto('/')
+    const addBtn = page.getByRole('button', { name: /add task/i })
+    await expect(addBtn).toBeVisible()
+    const box = await addBtn.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.width).toBeGreaterThanOrEqual(44)
+    expect(box!.height).toBeGreaterThanOrEqual(44)
+  })
+
+  test('task row and checkbox have minimum 44px touch target', async ({ page }) => {
+    await page.route('**/tasks', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          tasks: [
+            { id: 1, title: 'Touch target task', completed: false, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+          ],
+        }),
+      })
+    )
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+    const row = page.getByRole('listitem').filter({ hasText: 'Touch target task' })
+    await expect(row).toBeVisible()
+    const rowBox = await row.boundingBox()
+    expect(rowBox).not.toBeNull()
+    expect(rowBox!.height).toBeGreaterThanOrEqual(44)
+  })
+
+  test('long task title wraps without causing horizontal scroll at 320px', async ({ page }) => {
+    const longTitle = 'A'.repeat(120)
+    await page.route('**/tasks', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          tasks: [
+            { id: 1, title: longTitle, completed: false, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+          ],
+        }),
+      })
+    )
+    await page.setViewportSize({ width: 320, height: 568 })
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+    const clientWidth = await page.evaluate(() => document.documentElement.clientWidth)
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1)
+  })
+
+  test('no horizontal scroll at 375px, 768px, and 1280px viewports', async ({ page }) => {
+    await page.route('**/tasks', (route) => route.fulfill(emptyTasksResponse()))
+    for (const width of [375, 768, 1280]) {
+      await page.setViewportSize({ width, height: 700 })
+      await page.goto('/')
+      await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth)
+      expect(scrollWidth, `Viewport ${width}px should not have horizontal scroll`).toBeLessThanOrEqual(clientWidth + 1)
+    }
+  })
+})

@@ -25,7 +25,7 @@ const tasksWithCompleted = () => ({
 })
 
 async function waitForAppReady(page: import('@playwright/test').Page) {
-  await expect(page.getByRole('heading', { name: 'Tasks' })).toBeVisible({ timeout: 15000 })
+  await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible({ timeout: 15000 })
   await expect(page.getByRole('textbox', { name: /new task title/i })).toBeVisible({ timeout: 5000 })
   await expect(page.getByRole('status', { name: /loading/i })).not.toBeVisible({ timeout: 10000 })
 }

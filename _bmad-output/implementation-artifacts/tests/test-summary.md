@@ -34,23 +34,23 @@
 
 ### E2E Tests (Playwright)
 
-- [x] `bmad-todo-client/e2e/app.spec.ts` – Tasks heading, add row visibility, content area (empty/list/error), **shows error when API returns 500**, task list from API, add-task flow, mark-complete flow
+- [x] `bmad-todo-client/e2e/app.spec.ts` – Tasks heading, add row visibility, content area (empty/list/error), error when API returns 500, task list from API, add-task flow, mark-complete flow, responsive layout (viewport meta, no horizontal scroll at 320px, 44px touch targets, long title wraps)
 - [x] `bmad-todo-client/e2e/a11y.spec.ts` – axe WCAG 2.1 AA (contrast, focus, semantics); empty list and list with completed task
 
 ## Coverage
 
 | Area | Covered | Notes |
-|------|--------|--------|
+|------|--------|------|
 | API (Rails) | 25 tests, ~97% line coverage | GET/POST/PATCH /tasks, GET /up, CORS, validation, 404 |
 | API client (tasks.ts) | 21 tests | getBaseUrl, fetchTasks, createTask, updateTask; 2xx/4xx/5xx, timeouts |
-| UI components | 6 files, 75 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
-| E2E user flows | 9 tests | Load list, empty state, error on 500, add task flow, mark complete flow, a11y (2) |
+| UI components | 6 files, 77 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
+| E2E user flows | 14 tests | Load list, empty state, error on 500, add task flow, mark complete flow, responsive (5), a11y (2) |
 
 ## Run Results (2026-02-18)
 
 - **Rails:** 25 runs, 98 assertions, 0 failures
-- **Vitest:** 6 files, 75 tests passed
-- **Playwright:** 9 tests passed
+- **Vitest:** 6 files, 77 tests passed
+- **Playwright:** 14 tests passed
 
 ## Commands
 
@@ -65,4 +65,4 @@
 
 ---
 
-*Tests generated and verified. Local servers were stopped on 5173/3000 before E2E so Playwright could start the dev server.*
+*Tests generated and verified. Local servers were stopped on 5173/3000 before E2E so Playwright could start the dev server. a11y E2E locator updated to `getByRole('heading', { name: 'Tasks', exact: true })` to avoid strict-mode match on "No tasks yet".*

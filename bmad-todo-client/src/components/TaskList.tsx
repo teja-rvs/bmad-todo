@@ -10,7 +10,7 @@ interface TaskListProps {
 
 export function TaskList({ tasks, onComplete, completingId }: TaskListProps) {
   return (
-    <ul className="list-none p-0 m-0 flex flex-col gap-0" role="list" aria-label="Task list">
+    <ul className="list-none p-0 m-0 flex flex-col gap-0 min-w-0" role="list" aria-label="Task list">
       {tasks.map((task) => (
         <TaskRow
           key={task.id}

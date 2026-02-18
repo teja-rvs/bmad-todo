@@ -44,11 +44,11 @@ export function AddRow({ onSubmit, isSubmitting = false, errorDescriptionId }: A
         placeholder="Add a task…"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="flex-1 min-h-[44px] px-4 rounded border border-[#8b7355] bg-[#fefdfb] text-[#2c2419] text-[1.125rem] placeholder:text-[#5a5147] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8b7355] focus-visible:ring-offset-2"
+        className="flex-1 min-w-0 min-h-[44px] px-4 rounded border border-[#8b7355] bg-[#fefdfb] text-[#2c2419] text-[1.125rem] placeholder:text-[#5a5147] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8b7355] focus-visible:ring-offset-2"
       />
       <button
         type="submit"
-        className="min-h-[44px] px-5 rounded bg-[#7a6649] text-[#fefdfb] font-medium text-[1.125rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8b7355] focus-visible:ring-offset-2 disabled:opacity-50"
+        className="min-h-[44px] min-w-[44px] px-5 rounded bg-[#7a6649] text-[#fefdfb] font-medium text-[1.125rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8b7355] focus-visible:ring-offset-2 disabled:opacity-50"
         aria-label="Add task"
         disabled={isSubmitting}
       >
