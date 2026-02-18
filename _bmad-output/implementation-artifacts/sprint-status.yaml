@@ -51,8 +51,8 @@ development_status:
   2-2-frontend-add-task-flow-and-show-new-task-in-list: done
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-backend-patch-tasks-id-to-mark-complete: backlog
+  epic-3: in-progress
+  3-1-backend-patch-tasks-id-to-mark-complete: done
   3-2-frontend-mark-task-complete-and-show-updated-state: backlog
   epic-3-retrospective: optional
 

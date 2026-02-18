@@ -48,6 +48,13 @@ class TasksEndpointTest < ActionDispatch::IntegrationTest
     assert_equal "http://localhost:5173", response.headers["Access-Control-Allow-Origin"]
   end
 
+  test "PATCH /tasks/:id returns CORS header for frontend origin" do
+    task = Task.create!(title: "CORS PATCH", completed: false)
+    patch "/tasks/#{task.id}", params: { completed: true }, as: :json, headers: { "Origin" => "http://localhost:5173" }
+    assert_response :ok
+    assert_equal "http://localhost:5173", response.headers["Access-Control-Allow-Origin"]
+  end
+
   test "POST /tasks with valid title returns 201 and created task with snake_case keys" do
     post "/tasks", params: { title: "New task" }, as: :json
     assert_response :created
@@ -117,5 +124,80 @@ class TasksEndpointTest < ActionDispatch::IntegrationTest
     post "/tasks", params: "{ invalid", headers: { "Content-Type" => "application/json" }
     assert_response :bad_request
     assert_equal 400, response.status
+  end
+
+  test "PATCH /tasks/:id with valid id and completed true returns 200 and updated task with completed true" do
+    task = Task.create!(title: "To complete", completed: false)
+    patch "/tasks/#{task.id}", params: { completed: true }, as: :json
+    assert_response :ok
+    assert_equal 200, response.status
+
+    json = response.parsed_body
+    assert_equal task.id, json["id"]
+    assert_equal "To complete", json["title"]
+    assert_equal true, json["completed"]
+    assert json.key?("created_at")
+    assert json.key?("updated_at")
+
+    task.reload
+    assert_equal true, task.completed
+  end
+
+  test "PATCH /tasks/:id with valid id and completed false returns 200 and updated task with completed false" do
+    task = Task.create!(title: "To uncomplete", completed: true)
+    patch "/tasks/#{task.id}", params: { completed: false }, as: :json
+    assert_response :ok
+    assert_equal 200, response.status
+
+    json = response.parsed_body
+    assert_equal task.id, json["id"]
+    assert_equal "To uncomplete", json["title"]
+    assert_equal false, json["completed"]
+
+    task.reload
+    assert_equal false, task.completed
+  end
+
+  test "PATCH /tasks/:id with non-existent id returns 404 and error body" do
+    non_existent_id = (Task.maximum(:id) || 0) + 99_999
+    patch "/tasks/#{non_existent_id}", params: { completed: true }, as: :json
+    assert_response :not_found
+    assert_equal 404, response.status
+
+    json = response.parsed_body
+    assert json.key?("error")
+    assert_equal "Task not found", json["error"]
+  end
+
+  test "PATCH /tasks/:id with invalid id format returns 404" do
+    patch "/tasks/abc", params: { completed: true }, as: :json
+    assert_response :not_found
+    assert_equal 404, response.status
+    json = response.parsed_body
+    assert json.key?("error")
+    assert_equal "Task not found", json["error"]
+  end
+
+  test "PATCH /tasks/:id with empty body returns 200 and unchanged task" do
+    task = Task.create!(title: "Unchanged", completed: false)
+    patch "/tasks/#{task.id}", params: {}, as: :json
+    assert_response :ok
+    assert_equal 200, response.status
+    json = response.parsed_body
+    assert_equal task.id, json["id"]
+    assert_equal false, json["completed"]
+    task.reload
+    assert_equal false, task.completed
+  end
+
+  test "PATCH /tasks/:id with string completed true coerces to boolean" do
+    task = Task.create!(title: "Coerce", completed: false)
+    patch "/tasks/#{task.id}", params: { completed: "true" }, as: :json
+    assert_response :ok
+    assert_equal 200, response.status
+    json = response.parsed_body
+    assert_equal true, json["completed"]
+    task.reload
+    assert_equal true, task.completed
   end
 end
