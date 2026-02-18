@@ -44,6 +44,7 @@ function App() {
     }
   }, [])
 
+  // SPA data strategy (AC #2): after create/complete, merge from API response; no full-page reload.
   const handleCreateTask = useCallback(
     (title: string) => {
       setIsSubmitting(true)
@@ -92,7 +93,7 @@ function App() {
           isSubmitting={isSubmitting}
           errorDescriptionId={error ? 'app-error' : undefined}
         />
-        {/* Live region for dynamic list updates (AC #3): new task and completion state announced to screen readers. */}
+        {/* Live region for dynamic list updates (accessibility): new task and completion state announced to screen readers. */}
         <div
           role="status"
           aria-live="polite"

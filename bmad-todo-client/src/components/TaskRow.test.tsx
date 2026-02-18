@@ -97,4 +97,16 @@ describe('TaskRow', () => {
     const checkbox = screen.getByRole('checkbox', { name: /test task/i })
     expect(checkbox.className).toMatch(/accent-\[#556b1c\]/)
   })
+
+  // SPA guardrail (AC #1): mark-complete must not cause full-page reload; uses client handler only
+  it('uses checkbox only for completion; no link or form that would cause navigation', () => {
+    const { container } = render(<TaskRow task={baseTask} onComplete={vi.fn()} />)
+    const row = container.querySelector('li')
+    expect(row).toBeInTheDocument()
+    const links = row!.querySelectorAll('a[href]')
+    expect(links.length).toBe(0)
+    const forms = row!.querySelectorAll('form')
+    expect(forms.length).toBe(0)
+    expect(screen.getByRole('checkbox', { name: /test task/i })).toBeInTheDocument()
+  })
 })

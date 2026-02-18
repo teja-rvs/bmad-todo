@@ -123,7 +123,7 @@ User can use the app with keyboard only, with a screen reader, on desktop and mo
 
 ### Epic 6: SPA behavior and error feedback
 The app behaves as an SPA (no full-page reloads for core flows) and surfaces clear feedback when the service is unavailable.
-**FRs covered:** FR25, FR26.
+**FRs covered:** FR24, FR25.
 
 ---
 

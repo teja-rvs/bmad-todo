@@ -157,6 +157,87 @@ test.describe('App', () => {
     await checkbox.click()
     await expect(checkbox).not.toBeChecked({ timeout: 5000 })
   })
+
+  test('SPA: add task and mark complete do not cause full-page reload (AC #1, #2)', async ({ page }) => {
+    const initialTasks = { tasks: [] }
+    let createdTask: { id: number; title: string; completed: boolean; created_at: string; updated_at: string } | null = null
+    let completedState = false
+
+    await page.route('**/tasks', (route) => {
+      const request = route.request()
+      if (request.method() === 'GET') {
+        const body = createdTask
+          ? { tasks: [{ ...createdTask, completed: completedState }] }
+          : initialTasks
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(body),
+        })
+      }
+      if (request.method() === 'POST') {
+        const postBody = request.postDataJSON()
+        const title = postBody?.title ?? 'New task'
+        createdTask = {
+          id: 1,
+          title,
+          completed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+        return route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify(createdTask),
+        })
+      }
+      return route.continue()
+    })
+    await page.route('**/tasks/1', (route) => {
+      const request = route.request()
+      if (request.method() === 'PATCH') {
+        const body = request.postDataJSON() as { completed?: boolean }
+        completedState = body?.completed ?? true
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...createdTask!,
+            completed: completedState,
+            updated_at: new Date().toISOString(),
+          }),
+        })
+      }
+      return route.continue()
+    })
+
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 10000 })
+
+    const navigationCount = () =>
+      page.evaluate(() => window.performance.getEntriesByType('navigation').length)
+    const initialNavs = await navigationCount()
+
+    // Same-document guard: if page reloaded, this id would be lost
+    const testId = await page.evaluate(() => {
+      const id = crypto.randomUUID()
+      ;(window as unknown as Record<string, unknown>).__spaTestId = id
+      return id
+    })
+
+    const input = page.getByRole('textbox', { name: /new task title/i })
+    await input.fill('SPA no-reload task')
+    await page.getByRole('button', { name: /add task/i }).click()
+    await expect(page.getByText('SPA no-reload task')).toBeVisible({ timeout: 5000 })
+    expect(await navigationCount()).toBe(initialNavs)
+    expect(await page.evaluate(() => (window as unknown as Record<string, unknown>).__spaTestId)).toBe(testId)
+
+    const checkbox = page.getByRole('checkbox', { name: 'SPA no-reload task' })
+    await checkbox.click()
+    await expect(checkbox).toBeChecked({ timeout: 5000 })
+    expect(await navigationCount()).toBe(initialNavs)
+    expect(await page.evaluate(() => (window as unknown as Record<string, unknown>).__spaTestId)).toBe(testId)
+  })
 })
 
 test.describe('Responsive layout and touch targets (AC #1, #2, #3)', () => {

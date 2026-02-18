@@ -109,4 +109,39 @@ describe('AddRow', () => {
     expect(button.className).toMatch(/focus-visible:ring-\[#8b7355\]/)
     expect(button.className).toMatch(/focus-visible:ring-offset-2/)
   })
+
+  // SPA guardrail (AC #1): add-task must not cause full-page reload; submit uses handler and form has no action
+  it('form submit calls onSubmit and form has no action so no full-page reload occurs', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const { container } = render(<AddRow onSubmit={onSubmit} />)
+    const form = container.querySelector('form')
+    expect(form).toBeInTheDocument()
+    expect(form).not.toHaveAttribute('action')
+    let defaultPrevented = false
+    form!.addEventListener('submit', (e) => {
+      setTimeout(() => {
+        defaultPrevented = e.defaultPrevented
+      }, 0)
+    })
+    const input = screen.getByRole('textbox', { name: /new task title/i })
+    await user.type(input, 'SPA guard task')
+    await user.click(screen.getByRole('button', { name: /add task/i }))
+    await new Promise((r) => setTimeout(r, 10))
+    expect(defaultPrevented).toBe(true)
+    expect(onSubmit).toHaveBeenCalledWith('SPA guard task')
+  })
+
+  it('form has no action attribute so submit does not trigger navigation', () => {
+    const { container } = render(<AddRow onSubmit={vi.fn()} />)
+    const form = container.querySelector('form')
+    expect(form).not.toHaveAttribute('action')
+  })
+
+  it('form has no link that would cause full-page navigation for add-task flow', () => {
+    const { container } = render(<AddRow onSubmit={vi.fn()} />)
+    const form = container.querySelector('form')
+    const linksWithHref = form!.querySelectorAll('a[href]')
+    expect(linksWithHref.length).toBe(0)
+  })
 })
