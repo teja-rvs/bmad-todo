@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation']
+stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'epic-7-docker-added']
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -66,6 +66,7 @@ NFR-R2: If the server or network is unavailable, the app surfaces a clear indica
 - **Naming and structure:** Database and API use snake_case; React components PascalCase, files and variables camelCase. Frontend: `src/components/` (AddRow, TaskList, TaskRow, EmptyState), `src/api/tasks.ts` as sole backend caller, `src/types/task.ts`. Backend: standard Rails (models, controllers, routes).
 - **Error handling:** Backend returns consistent JSON error and HTTP status; frontend surfaces user-facing message (e.g. "Couldn't save. Try again.") and optional retry; match NFR-R2 for service unavailable.
 - **Framework conventions:** Use Rails generators for model, controller, migrations; use Vite/React official scaffold; immutable state updates; single strategy for merging API responses into state.
+- **Docker (Epic 7):** Containerization via Docker; orchestration via Docker Compose (base `docker-compose.yml` at repo root, overrides `docker-compose.dev.yml`, `docker-compose.test.yml`). All app images: multistage builds only; non-root user in final stage. Health checks required for API and db; `depends_on: condition: service_healthy` for API on db. Dev/test config via env vars and compose overrides; `.env.example` at root; frontend in Docker must receive API URL via env (e.g. `VITE_API_URL`). Root `.dockerignore` to exclude _bmad-output, node_modules, .git, etc.
 
 **From UX Design:**
 
@@ -124,6 +125,10 @@ User can use the app with keyboard only, with a screen reader, on desktop and mo
 ### Epic 6: SPA behavior and error feedback
 The app behaves as an SPA (no full-page reloads for core flows) and surfaces clear feedback when the service is unavailable.
 **FRs covered:** FR24, FR25.
+
+### Epic 7: Docker and local orchestration
+Developer can run the full stack (client, API, PostgreSQL) via Docker and Docker Compose with consistent dev/test parity, non-root containers, multistage builds, and health-checked services.
+**Source:** Architecture — Infrastructure & Deployment, Docker Patterns, Project Structure.
 
 ---
 
@@ -329,3 +334,72 @@ I want to see when the app cannot reach the server so that I know to retry or ch
 **Then** the app shows a clear, user-facing message (e.g. “Service unavailable” or “Couldn’t save. Try again.”) instead of failing silently.
 **And** optionally, a retry or “Try again” action is offered.
 **And** the same error handling applies for create and complete (e.g. inline or banner, no modal required for MVP).
+
+---
+
+## Epic 7: Docker and local orchestration
+
+Developer can run the full stack (client, API, PostgreSQL) via Docker and Docker Compose with consistent dev/test parity, non-root containers, multistage builds, and health-checked services.
+
+### Story 7.1: Backend Dockerfile — multistage build and non-root user
+
+As a developer,
+I want the Rails API built and run in a Docker container using a multistage Dockerfile and a non-root user,
+So that the API runs consistently in any environment and follows container security practice.
+
+**Acceptance Criteria:**
+
+**Given** the `bmad-todo-api` application exists,
+**When** I add a `Dockerfile` in `bmad-todo-api/`,
+**Then** the Dockerfile uses a multistage build: (1) a build stage that installs dependencies (bundle) and compiles assets if any, (2) a final stage that copies only what is needed to run the app (e.g. Rails server) and does not include build tools.
+**And** the final stage defines a non-root user (e.g. `app` or use image-provided user) and sets `USER` to that user; app directories (e.g. app code, tmp) are writable by that user.
+**And** the image builds successfully and running the container starts the Rails server (e.g. `rails s` or equivalent).
+**And** no process in the final image runs as root.
+
+### Story 7.2: Frontend Dockerfile — multistage build and non-root user
+
+As a developer,
+I want the Vite/React client built and served from a Docker container using a multistage Dockerfile and a non-root user,
+So that the client runs consistently and follows container security practice.
+
+**Acceptance Criteria:**
+
+**Given** the `bmad-todo-client` application exists,
+**When** I add a `Dockerfile` in `bmad-todo-client/`,
+**Then** the Dockerfile uses a multistage build: (1) a build stage that installs dependencies and runs the production build (e.g. `npm run build`), (2) a final stage with a minimal runtime (e.g. nginx or a minimal Node image) that serves only the built assets (e.g. from `dist/`).
+**And** the final stage defines a non-root user and sets `USER` to that user; any directories the process needs to write are owned by that user.
+**And** the image builds successfully and running the container serves the built frontend.
+**And** no process in the final image runs as root.
+
+### Story 7.3: Docker Compose base and health checks
+
+As a developer,
+I want a base Docker Compose setup at the repo root that defines the client, API, and PostgreSQL services with health checks and dependency ordering,
+So that I can run the full stack with one command and have the API start only after the database is ready.
+
+**Acceptance Criteria:**
+
+**Given** the repo root contains `bmad-todo-client` and `bmad-todo-api`,
+**When** I add `docker-compose.yml` at the repo root,
+**Then** it defines services for the frontend (client), backend (API), and database (PostgreSQL).
+**And** the `db` service has a `healthcheck` (e.g. `pg_isready` or equivalent) so Compose can detect when the database is ready.
+**And** the API service has a `healthcheck` (e.g. `curl -f http://localhost:3000/up` or a Rails health route); the API application exposes a health endpoint (e.g. GET /up) that returns a success status.
+**And** the API service uses `depends_on` with `condition: service_healthy` for the db service so the API starts only after the database is healthy.
+**And** a root `.dockerignore` exists that excludes unnecessary content (e.g. `_bmad-output`, `node_modules`, `.git`) from build context where appropriate.
+**And** `docker compose up` (or `docker compose -f docker-compose.yml up`) builds and starts all services such that the app is reachable.
+
+### Story 7.4: Compose override files and environment configuration
+
+As a developer,
+I want environment-specific Compose overrides and documented env vars so that dev and test runs use the correct database, ports, and API URL without code changes,
+So that onboarding and running tests in Docker are straightforward.
+
+**Acceptance Criteria:**
+
+**Given** the base `docker-compose.yml` exists,
+**When** I add `docker-compose.dev.yml` and `docker-compose.test.yml` at the repo root,
+**Then** dev override supplies dev-appropriate env vars (e.g. `RAILS_ENV=development`, `DATABASE_URL`, optional volume mounts for live code if desired).
+**And** test override supplies test-appropriate env vars (e.g. `RAILS_ENV=test`, separate or isolated test DB) so that test runs (e.g. `docker compose run api rspec`) use the test database.
+**And** the frontend container receives the API URL via an env var (e.g. `VITE_API_URL` or equivalent) that points at the API service (e.g. `http://bmad-todo-api:3000` or as appropriate for the compose network), so the client in Docker can call the API.
+**And** a root `.env.example` lists all required env vars (e.g. `VITE_API_URL`, `DATABASE_URL`, `RAILS_ENV`) with example values and no secrets.
+**And** the README (or equivalent) documents how to run with Docker: e.g. `docker compose -f docker-compose.yml -f docker-compose.dev.yml up` for dev, and how to use the test override for running tests; which env vars are required and where to set them (e.g. `.env`).

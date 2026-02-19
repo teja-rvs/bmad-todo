@@ -211,6 +211,12 @@ rails db:migrate
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
+| Containerization | **Docker** | Consistent dev/prod parity; single-command run for client, API, and PostgreSQL; easier onboarding. |
+| Local orchestration | **Docker Compose** | Run frontend, backend, and database with `docker compose up`; base compose at repo root; override files per environment. |
+| Environments | **Dev/test via env vars + compose files** | Use env variables (e.g. `.env`, `.env.dev`, `.env.test`) and separate compose files (`docker-compose.yml` base, `docker-compose.dev.yml`, `docker-compose.test.yml`) so dev and test run with correct DB, ports, and API URLs without code changes. |
+| Health checks | **Required for all services** | Define `healthcheck` in Compose (and optionally in Dockerfile) for API and db; client may use HTTP check on dev server or omit if not critical. Enables dependency ordering and restart policies. |
+| Container security | **No root user** | All images MUST run as non-root user. Create a dedicated user in Dockerfile (e.g. `app` or `node`/`rails`) and `USER` that user; fix ownership of app dirs as needed. No running as root in production or dev. |
+| Image build | **Multistage builds only** | Frontend and backend Dockerfiles MUST use multistage builds: build stage for dependencies and compile/assets, final stage for runtime only. No single-stage "everything in one image" for app services. |
 | Hosting / CI/CD / env / monitoring | Deferred | User: decide later |
 
 ### Decision Impact Analysis
@@ -222,6 +228,7 @@ rails db:migrate
 4. Implement UI: load tasks on mount (GET), create task (POST then update list), mark complete (PATCH then update list), empty state.
 5. Wire errors and connectivity feedback (e.g. "service unavailable").
 6. Accessibility pass (keyboard, focus, semantics, contrast).
+7. **Docker:** Add multistage, non-root `Dockerfile` to `bmad-todo-client` and `bmad-todo-api`; add root `docker-compose.yml` (base), `docker-compose.dev.yml`, `docker-compose.test.yml`, and `.env.example`. Define health checks for API and db; use env vars for dev/test. Ensure frontend env in Docker points at API service URL.
 
 **Cross-component dependencies:**
 - Frontend depends on API contract (REST, JSON shape, error format); backend does not depend on frontend.
@@ -308,6 +315,17 @@ rails db:migrate
 - **Scope:** Local to the list or to the action (e.g. disable Add button while submitting); no global loading overlay required for MVP unless chosen.
 - **UI:** Per UX spec — optional subtle indicator; avoid blocking the whole UI.
 
+### Docker Patterns
+
+**All Docker setup MUST follow:**
+
+- **Multistage builds:** Every app Dockerfile (client and API) MUST use at least two stages: (1) build stage — install deps, compile/build assets; (2) final stage — minimal runtime image, copy only what’s needed to run. No single-stage image that includes build tools at runtime.
+- **Non-root user:** Final stage MUST define a non-root user (e.g. `RUN adduser --disabled-password app` or image-provided user) and set `USER` to that user. Ensure app directories (e.g. app code, tmp) are writable by that user; do not run as root.
+- **Health checks:** In `docker-compose.yml`, define `healthcheck` for the API service (e.g. `curl -f http://localhost:3000/up` or Rails health route) and for the `db` service (e.g. `pg_isready`). Use these for `depends_on: condition: service_healthy` so API starts after DB is ready. Client health check optional for dev.
+- **Dev/test via env and compose:** Use env variables for environment-specific config (e.g. `RAILS_ENV`, `DATABASE_URL`, `VITE_API_URL`). Provide a base `docker-compose.yml` and override files: `docker-compose.dev.yml` (dev defaults, optional volume mounts), `docker-compose.test.yml` (test DB, test env vars). Run with e.g. `docker compose -f docker-compose.yml -f docker-compose.dev.yml up`. Document in README which env vars are required and how to use each compose file.
+
+**Avoid:** Running containers as root; single-stage Dockerfiles that include compilers/tooling in the final image; hardcoding dev/test differences in code instead of env/compose; skipping health checks for API and db.
+
 ### Framework Conventions
 
 **All AI agents MUST follow framework-native practices:**
@@ -324,6 +342,7 @@ rails db:migrate
 - Use the same API response and error shape across all endpoints and the frontend API layer.
 - Refetch or update list from API response after create/complete; do not add a real-time channel for MVP.
 - Use immutable state updates in React and a single, documented strategy for merging API responses into state.
+- For Docker: use multistage builds only, run as non-root, define health checks for API and db, and support dev/test via env variables and compose override files (no root user, no single-stage app images).
 
 **Pattern verification:** Code review and/or small checklist (naming, response format, error format, no real-time). Document any exception in the architecture doc or ADR.
 
@@ -342,6 +361,7 @@ rails db:migrate
 - Mutating React state in place (e.g. `tasks.push(newTask)`).
 - Exposing stack traces or internal details in API error responses.
 - Introducing patterns that conflict with Rails or React standard practices and design principles.
+- Docker: running containers as root; single-stage Dockerfiles for app services; omitting health checks for API and db; hardcoding dev/test config instead of using env and compose overrides.
 
 ## Project Structure & Boundaries
 
@@ -353,8 +373,13 @@ Two applications; one repo with sibling directories (or two repos). Root shown a
 bmad-todo/
 ├── bmad-todo-client/          # Vite + React + TypeScript frontend
 ├── bmad-todo-api/              # Rails API backend
+├── docker-compose.yml          # Base: client, API, PostgreSQL (shared definitions)
+├── docker-compose.dev.yml      # Dev overrides (env, ports, volumes)
+├── docker-compose.test.yml     # Test overrides (env, isolated DB, etc.)
+├── .env.example                # Example env vars for dev/test (no secrets)
+├── .dockerignore               # Exclude _bmad-output, node_modules, .git, etc.
 ├── _bmad-output/               # Planning artifacts (PRD, UX, architecture)
-└── README.md                   # How to run client and API
+└── README.md                   # How to run client and API (native and Docker)
 ```
 
 ### Frontend: bmad-todo-client (Complete Project Tree)
@@ -364,6 +389,7 @@ bmad-todo-client/
 ├── README.md
 ├── package.json
 ├── package-lock.json
+├── Dockerfile                  # Multistage, non-root: build stage, then minimal runtime (e.g. nginx)
 ├── vite.config.ts
 ├── tsconfig.json
 ├── tsconfig.app.json
@@ -401,6 +427,7 @@ bmad-todo-api/
 ├── README.md
 ├── Gemfile
 ├── Gemfile.lock
+├── Dockerfile                  # Multistage, non-root: build stage (bundle, assets if any), final stage (rails s)
 ├── Rakefile
 ├── config.ru
 ├── .gitignore
@@ -473,15 +500,16 @@ bmad-todo-api/
 ### File Organization Patterns
 
 - **Configuration:** Frontend: `vite.config.ts`, `tailwind.config.js`, `tsconfig.*`, `.env.example`. Backend: `config/` (database, routes, CORS).
+- **Docker:** Repo root: base `docker-compose.yml`, override files `docker-compose.dev.yml` and `docker-compose.test.yml`; `.env.example` for env var documentation; root `.dockerignore`. Each app: multistage `Dockerfile` in `bmad-todo-client/` and `bmad-todo-api/`, both running as non-root. Compose defines health checks for API and db; use env vars for dev/test (e.g. `VITE_API_URL`, `RAILS_ENV`, `DATABASE_URL`). Frontend API URL in Docker must target the API service (e.g. via env).
 - **Source:** Frontend: `src/` by role (components, api, types). Backend: `app/` by Rails convention (controllers, models).
 - **Tests:** Frontend: `src/__tests__/` or co-located `*.test.tsx`. Backend: `spec/` (or `test/`) mirroring `app/`.
 - **Assets:** Frontend: `public/` for static; Tailwind for styling. Backend: no asset pipeline for API-only.
 
 ### Development Workflow
 
-- **Frontend:** `npm run dev` (Vite); set `VITE_API_URL` to backend (e.g. `http://localhost:3000`).
-- **Backend:** `rails s` (default port 3000); run `rails db:create db:migrate` before first run.
-- **Build:** Frontend: `npm run build` → output to `dist/`. Backend: no front-end build; deployment of API only (deployment TBD).
+- **Native (no Docker):** Frontend: `npm run dev` (Vite); set `VITE_API_URL` to backend (e.g. `http://localhost:3000`). Backend: `rails s` (default port 3000); run `rails db:create db:migrate` before first run.
+- **Docker:** From repo root, use env + compose overrides: e.g. `docker compose -f docker-compose.yml -f docker-compose.dev.yml up` for dev; `docker compose -f docker-compose.yml -f docker-compose.test.yml up` (or run tests in CI) for test. Compose defines services for `bmad-todo-client`, `bmad-todo-api`, and `db`, with health checks on API and db and `depends_on: condition: service_healthy` where appropriate. Set `VITE_API_URL`, `RAILS_ENV`, `DATABASE_URL`, etc. via `.env` or override file. All images use multistage builds and run as non-root.
+- **Build:** Frontend: `npm run build` → output to `dist/`. Backend: no front-end build; deployment of API only (deployment TBD). Docker images build from per-app Dockerfiles when using Docker.
 
 ## Architecture Validation Results
 
@@ -572,3 +600,4 @@ No critical or important issues found. Optional gaps are minor and can be resolv
 
 1. **Backend:** `rails new bmad-todo-api --api --database=postgresql` → `cd bmad-todo-api` → `rails db:create` → create `tasks` migration → `rails db:migrate` → implement `TasksController` (index, create, update) and CORS.
 2. **Frontend:** `npm create vite@latest bmad-todo-client -- --template react-ts` → `cd bmad-todo-client` → `npm install` → add Tailwind → implement `src/api/tasks.ts`, `src/types/task.ts`, and components (AddRow, TaskList, TaskRow, EmptyState) in `App.tsx` with fetch-on-load and refetch/merge after mutations.
+3. **Docker:** Add multistage, non-root `Dockerfile` in each app; add repo-root base `docker-compose.yml` plus `docker-compose.dev.yml` and `docker-compose.test.yml`; `.env.example` for required env vars. Define health checks for API and db; run containers as non-root. Use env vars (e.g. `VITE_API_URL` pointing at API service) when running in Compose.
