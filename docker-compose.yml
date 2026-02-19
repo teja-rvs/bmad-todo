@@ -22,12 +22,9 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      # For production/7.4 use env file; do not commit real secrets
       DATABASE_URL: postgresql://bmad_todo_api:bmad_todo_api@db:5432/bmad_todo_api_development
       RAILS_ENV: production
-      # Required by Rails in production; must be set via env (e.g. .env) for production deployment
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
-      # Satisfy production database.yml ERB; DATABASE_URL takes precedence for primary connection
       BMAD_TODO_API_DATABASE_PASSWORD: bmad_todo_api
     ports:
       - "3000:3000"
@@ -45,6 +42,8 @@ services:
     build:
       context: bmad-todo-client
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000
     restart: unless-stopped
     ports:
       - "8080:8080"

@@ -1,0 +1,14 @@
+# Test override: test env, test DB. Use for running API tests in Docker.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.test.yml run api bin/rails test
+# Ensure test DB exists first: docker compose -f docker-compose.yml -f docker-compose.test.yml run api rails db:create db:migrate RAILS_ENV=test
+
+services:
+  api:
+    environment:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://bmad_todo_api:bmad_todo_api@db:5432/bmad_todo_api_test
+
+  client:
+    build:
+      args:
+        VITE_API_URL: http://api:3000

@@ -14,6 +14,10 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
+# API URL for Docker/Compose: Vite embeds VITE_* at build time
+ARG VITE_API_URL=http://localhost:3000
+ENV VITE_API_URL=$VITE_API_URL
+
 # Copy source and build (Vite outputs to dist/)
 COPY . .
 RUN npm run build

@@ -7,7 +7,7 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins ENV.fetch("CORS_ORIGIN", "http://localhost:5173") # Vite dev; set CORS_ORIGIN in production
+    origins ENV.fetch("CORS_ORIGIN", "http://localhost:8080") # Vite dev; set CORS_ORIGIN in production
 
     resource "*",
       headers: :any,

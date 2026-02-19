@@ -36,4 +36,17 @@ test.describe('Real API E2E (smoke)', () => {
     await page.getByRole('button', { name: /add task/i }).click()
     await expect(page.getByText(title)).toBeVisible({ timeout: 10000 })
   })
+
+  test('mark task complete via real API and see updated state', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15000 })
+    const title = `E2E complete ${Date.now()}`
+    await page.getByRole('textbox', { name: /new task title/i }).fill(title)
+    await page.getByRole('button', { name: /add task/i }).click()
+    await expect(page.getByText(title)).toBeVisible({ timeout: 10000 })
+    const checkbox = page.getByRole('checkbox', { name: title })
+    await expect(checkbox).not.toBeChecked()
+    await checkbox.click()
+    await expect(checkbox).toBeChecked({ timeout: 5000 })
+  })
 })

@@ -1,0 +1,22 @@
+# Dev override: development env, dev DB, client API URL for Docker network.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+  api:
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://bmad_todo_api:bmad_todo_api@db:5432/bmad_todo_api_development
+    # Optional: mount app for live code (uncomment to use)
+    # volumes:
+    #   - ./bmad-todo-api:/app
+
+  client:
+    build:
+      context: bmad-todo-client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000
+    # Optional: mount source for live code (uncomment to use)
+    # volumes:
+    #   - ./bmad-todo-client:/app
+    #   - /app/node_modules

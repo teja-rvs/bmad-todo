@@ -72,5 +72,5 @@ development_status:
   7-1-backend-dockerfile-multistage-build-and-non-root-user: review
   7-2-frontend-dockerfile-multistage-build-and-non-root-user: done
   7-3-docker-compose-base-and-health-checks: done
-  7-4-compose-override-files-and-environment-configuration: backlog
+  7-4-compose-override-files-and-environment-configuration: done
   epic-7-retrospective: optional
