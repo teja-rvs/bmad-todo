@@ -66,4 +66,4 @@ development_status:
   epic-6: in-progress
   6-1-spa-behavior-no-full-page-reloads-for-core-flows: done
   6-2-error-feedback-service-unavailable-and-retry: done
-  epic-6-retrospective: optional
+  epic-6-retrospective: done
