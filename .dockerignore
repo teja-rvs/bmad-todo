@@ -1,0 +1,8 @@
+# Root .dockerignore: exclude from build context when building from repo root
+_bmad-output
+node_modules
+.git
+*.md
+docs
+.env
+.env.*

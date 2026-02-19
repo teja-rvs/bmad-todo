@@ -12,7 +12,7 @@
 | Client E2E | Playwright | `npm run test:e2e` (in bmad-todo-client) |
 | API | Rails Minitest | `bundle exec rails test` (in bmad-todo-api) |
 
-## Generated / Updated Tests
+## Generated Tests
 
 ### API Tests (Rails Minitest)
 
@@ -60,6 +60,12 @@ cd bmad-todo-api && bundle exec rails test
 # E2E (starts dev server; set VITE_API_URL for real-api spec)
 cd bmad-todo-client && npm run test:e2e
 ```
+
+## Last Run (2026-02-19)
+
+- **API:** 26 runs, 102 assertions, 0 failures. Line coverage 96.97%.
+- **Client unit:** 6 files, 85 tests passed.
+- **E2E:** 18 passed, 2 skipped (real-api smoke when backend not on port 3000).
 
 ## Next Steps
 

@@ -2,6 +2,18 @@
 
 Monorepo: Rails API backend + Vite + React + TypeScript frontend.
 
+## Run the full stack (Docker Compose)
+
+From the repo root, build and start client, API, and PostgreSQL:
+
+```bash
+cp .env.example .env
+# Edit .env and set SECRET_KEY_BASE (generate with: cd bmad-todo-api && rails secret)
+docker compose up --build
+```
+
+API at http://localhost:3000, client at http://localhost:8080. Do not commit `.env`.
+
 ## PostgreSQL (Docker)
 
 The API uses PostgreSQL. From the project root, start Postgres in Docker:

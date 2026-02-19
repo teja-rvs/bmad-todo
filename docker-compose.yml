@@ -1,5 +1,5 @@
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -10,6 +10,47 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: bmad-todo-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      # For production/7.4 use env file; do not commit real secrets
+      DATABASE_URL: postgresql://bmad_todo_api:bmad_todo_api@db:5432/bmad_todo_api_development
+      RAILS_ENV: production
+      # Required by Rails in production; must be set via env (e.g. .env) for production deployment
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+      # Satisfy production database.yml ERB; DATABASE_URL takes precedence for primary connection
+      BMAD_TODO_API_DATABASE_PASSWORD: bmad_todo_api
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/up"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  client:
+    build:
+      context: bmad-todo-client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   postgres_data:

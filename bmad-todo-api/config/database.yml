@@ -75,8 +75,10 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
+  # For Compose/single-DB: only primary is used; set DATABASE_URL (required).
   primary: &primary_production
     <<: *default
+    url: <%= ENV.fetch("DATABASE_URL") { raise "DATABASE_URL is required in production" } %>
     database: bmad_todo_api_production
     username: bmad_todo_api
     password: <%= ENV["BMAD_TODO_API_DATABASE_PASSWORD"] %>
