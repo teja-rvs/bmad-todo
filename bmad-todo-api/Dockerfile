@@ -1,74 +1,63 @@
 # syntax=docker/dockerfile:1
-# check=error=true
+# Multistage Dockerfile: build stage (deps + compile), final stage (runtime only, non-root).
+# Build: docker build -t bmad-todo-api .
+# Run:   docker run --rm -p 3000:3000 bmad-todo-api
+# Note:  For server to start fully, set DATABASE_URL or use Compose (Story 7.3); entrypoint runs db:migrate before rails server.
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t bmad_todo_api .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name bmad_todo_api bmad_todo_api
-
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
-
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=4.0.1
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+FROM docker.io/library/ruby:${RUBY_VERSION}-slim AS build
 
-# Rails app lives here
 WORKDIR /rails
-
-# Install base packages
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client && \
-    ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Set production environment variables and enable jemalloc for reduced memory usage and latency.
-ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
-
-# Throw-away build stage to reduce size of final image
-FROM base AS build
 
 # Install packages needed to build gems
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config && \
+    apt-get install -y --no-install-recommends build-essential git libpq-dev libyaml-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install application gems
-COPY vendor/* ./vendor/
-COPY Gemfile Gemfile.lock ./
+ENV BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_WITHOUT="development"
 
+# Install application gems (layer cache: Gemfile first)
+COPY Gemfile Gemfile.lock ./
 RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
-    bundle exec bootsnap precompile -j 1 --gemfile
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
 # Copy application code
 COPY . .
 
-# Precompile bootsnap code for faster boot times.
-# -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
-RUN bundle exec bootsnap precompile -j 1 app/ lib/
+# Precompile bootsnap for faster boot (API-only: no asset pipeline; optional, so errors ignored)
+RUN bundle exec bootsnap precompile -j 1 app/ lib/ 2>/dev/null || true
 
+# --- Final stage: minimal runtime, non-root user only ---
+FROM docker.io/library/ruby:${RUBY_VERSION}-slim AS final
 
+WORKDIR /rails
 
+# Runtime deps only (no build tools)
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends libpq5 curl && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Final stage for app image
-FROM base
+ENV RAILS_ENV="production" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_PATH="/usr/local/bundle"
 
-# Run and own only the runtime files as a non-root user for security
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
-USER 1000:1000
+# Non-root user: create and set ownership of app dirs (app, tmp, log, db, storage)
+RUN groupadd --system --gid 1000 app && \
+    useradd app --uid 1000 --gid 1000 --create-home --shell /bin/bash
 
-# Copy built artifacts: gems, application
-COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
-COPY --chown=rails:rails --from=build /rails /rails
+# Copy only what is needed to run (gems + app from build stage)
+COPY --chown=app:app --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
+COPY --chown=app:app --from=build /rails /rails
 
-# Entrypoint prepares the database.
+# Ensure writable dirs exist and are owned by app
+RUN chown -R app:app /rails/app /rails/tmp /rails/log /rails/db /rails/storage 2>/dev/null || true
+
+USER app
+
+EXPOSE 3000
+
+# Optional: prepare DB when starting server (runs as non-root)
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
-
-# Start server via Thruster by default, this can be overwritten at runtime
-EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]

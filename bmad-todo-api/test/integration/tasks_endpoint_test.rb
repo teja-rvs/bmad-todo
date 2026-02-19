@@ -3,6 +3,13 @@
 require "test_helper"
 
 class TasksEndpointTest < ActionDispatch::IntegrationTest
+  test "GET /tasks returns 200 and Content-Type application/json" do
+    get "/tasks"
+    assert_response :success
+    assert_equal 200, response.status
+    assert_match(%r{application/json}, response.headers["Content-Type"])
+  end
+
   test "GET /tasks returns 200 and empty tasks array when no tasks" do
     get "/tasks"
     assert_response :success

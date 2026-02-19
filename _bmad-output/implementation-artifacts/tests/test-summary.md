@@ -1,68 +1,61 @@
 # Test Automation Summary
 
 **Project:** bmad-todo  
-**Date:** 2026-02-19  
-**Workflow:** Quinn QA – Automate
+**Date:** 2025-02-19  
+**Workflow:** qa-automate (Quinn QA)
 
-## Test Framework
+## Test Frameworks Detected
 
-| Layer | Framework | Location |
-|-------|-----------|----------|
-| **API** | Rails Minitest (ActionDispatch::IntegrationTest) | `bmad-todo-api/test/` |
-| **Client unit** | Vitest, @testing-library/react, jsdom | `bmad-todo-client/src/` |
-| **Client E2E** | Playwright (@playwright/test) | `bmad-todo-client/e2e/` |
+| Area | Framework | Command |
+|------|-----------|---------|
+| Client unit/component | Vitest + Testing Library | `npm run test:run` (in bmad-todo-client) |
+| Client E2E | Playwright | `npm run test:e2e` (in bmad-todo-client) |
+| API | Rails Minitest (integration) | `bin/rails test` (in bmad-todo-api) |
 
 ## Generated Tests
 
-### API Tests (Rails)
+### API Tests (Rails – bmad-todo-api)
 
-- [x] `bmad-todo-api/test/integration/tasks_endpoint_test.rb` – GET/POST/PATCH /tasks (status codes, response shape, CORS, validation errors, 404)
-- [x] `bmad-todo-api/test/integration/health_endpoint_test.rb` – GET /up health check
-- [x] `bmad-todo-api/test/models/task_test.rb` – Task model
+- [x] `test/integration/tasks_endpoint_test.rb` – GET/POST/PATCH /tasks: status codes, response structure, CORS, validation, 404, 400
+- [x] `test/integration/health_endpoint_test.rb` – GET /up health check
+- [x] `test/models/task_test.rb` – Task model validations
+- [x] **Added this run:** GET /tasks Content-Type `application/json` assertion in `tasks_endpoint_test.rb`
 
-### Client API Layer (Vitest)
+### Client Unit Tests (Vitest – bmad-todo-client)
 
-- [x] `bmad-todo-client/src/api/tasks.test.ts` – `getBaseUrl`, `fetchTasks`, `createTask`, `updateTask` (status codes, response shape, errors, timeout)
+- [x] `src/api/tasks.test.ts` – getBaseUrl, fetchTasks, createTask, updateTask (happy path + errors)
+- [x] `src/App.test.tsx` – App behaviour and API integration
+- [x] `src/components/AddRow.test.tsx` – Add task UI
+- [x] `src/components/TaskRow.test.tsx` – Task row and checkbox
+- [x] `src/components/TaskList.test.tsx` – Task list
+- [x] `src/components/EmptyState.test.tsx` – Empty state
 
-### Client Unit (Components & App)
+### E2E Tests (Playwright – bmad-todo-client)
 
-- [x] `bmad-todo-client/src/App.test.tsx` – App load, empty state, task list, add row, error handling
-- [x] `bmad-todo-client/src/components/AddRow.test.tsx` – AddRow render, submit (Enter/button), trim, empty submit, clear input, disabled when submitting
-- [x] `bmad-todo-client/src/components/TaskList.test.tsx` – TaskList empty list, task titles, list semantics
-- [x] `bmad-todo-client/src/components/TaskRow.test.tsx` – TaskRow display, strikethrough for completed, checkbox, onComplete
-- [x] `bmad-todo-client/src/components/EmptyState.test.tsx` – EmptyState display
+- [x] `e2e/app.spec.ts` – App shell, task list, add task, mark complete, error handling, SPA no-reload, responsive/touch targets
+- [x] `e2e/a11y.spec.ts` – axe WCAG 2.1 AA (contrast, focus, semantics)
 
-### E2E Tests (Playwright)
+## Run Results (this run)
 
-- [x] `bmad-todo-client/e2e/app.spec.ts` – Tasks heading, add row visibility, content area (empty/list/error), error when API returns 500, task list from API, add-task flow, mark-complete flow, SPA no full-page reload (add/mark complete), responsive layout (viewport meta, no horizontal scroll at 320/375/768/1280px, 44px touch targets, long title wraps)
-- [x] `bmad-todo-client/e2e/a11y.spec.ts` – axe WCAG 2.1 AA (contrast, focus, semantics); empty list and list with completed task
+| Suite | Passed | Total | Notes |
+|-------|--------|-------|--------|
+| Client unit (Vitest) | 85 | 85 | 6 files |
+| API (Rails) | 26 | 26 | 102 assertions, 96.97% line coverage |
+| E2E (Playwright) | 18 | 18 | Chromium, webServer started dev on 5173 |
+
+All tests passed.
 
 ## Coverage
 
-| Area | Covered | Notes |
-|------|--------|------|
-| API (Rails) | 25 tests, ~97% line coverage | GET/POST/PATCH /tasks, GET /up, CORS, validation, 404 |
-| API client (tasks.ts) | 22 tests | getBaseUrl, fetchTasks, createTask, updateTask; 2xx/4xx/5xx, timeouts |
-| UI components | 6 files, 84 tests | App, AddRow, TaskList, TaskRow, EmptyState, api/tasks |
-| E2E user flows | 18 tests | Load list, empty state, error on 500/503, Try again, add task flow, mark complete flow, SPA no-reload, responsive (6), a11y (2) |
-
-## Run Results (2026-02-19)
-
-- **Rails:** 25 runs, 98 assertions, 0 failures (line coverage 96.97%)
-- **Vitest:** 6 files, 84 tests passed
-- **Playwright:** 18 tests passed
-
-## Commands
-
-- **API:** `cd bmad-todo-api && bundle exec rails test`
-- **Client unit:** `cd bmad-todo-client && npm run test:run`
-- **Client E2E:** `cd bmad-todo-client && npm run test:e2e` (ensure port 5173 is free or stop dev server first)
+- **API endpoints:** 4/4 covered (GET /tasks, POST /tasks, PATCH /tasks/:id, GET /up)
+- **UI flows:** Task list, add task, toggle complete, error states, responsive layout, a11y – covered by E2E and unit tests
 
 ## Next Steps
 
-- Run tests in CI (e.g. API and unit on every PR, E2E on main or nightly).
-- For risk-based strategy, test design planning, or NFR quality gates, consider the Test Architect (TEA) module.
+- Run tests in CI (client: `npm run test:run` and `npm run test:e2e`; API: `bin/rails test`)
+- Add more edge cases if requirements grow
+- Before running E2E locally, ensure no other process is bound to port 5173 (or let Playwright reuse existing dev server)
 
 ---
 
-*Summary updated by Quinn QA – Automate workflow (2026-02-19). All tests re-run and passed. No new tests generated; existing coverage (API, client unit, E2E) is complete for current features. For E2E, ensure port 5173 is free or stop dev server so Playwright can start the web server.*
+*Summary produced by Quinn QA Automate workflow. For risk-based strategy and advanced testing, see [Test Architect (TEA)](https://bmad-code-org.github.io/bmad-method-test-architecture-enterprise/).*
