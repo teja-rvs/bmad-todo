@@ -1,0 +1,32 @@
+# Dependencies and build output (reinstalled/copied in Dockerfile)
+node_modules
+dist
+dist-ssr
+*.local
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Git and tooling
+.git
+.gitignore
+.bmad-output
+_bmad
+
+# Editor and OS
+.vscode
+.idea
+.DS_Store
+*.log
+*.md
+!README.md
+
+# Tests and reports (not needed in image)
+playwright-report
+test-results
+coverage
+*.spec.ts
+*.test.tsx
+e2e

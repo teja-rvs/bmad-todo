@@ -2,6 +2,22 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Docker (build and run)
+
+From this directory (`bmad-todo-client/`), build and run the production image (multistage build, non-root user):
+
+```bash
+docker build -t bmad-todo-client .
+docker run --rm -p 4173:8080 bmad-todo-client
+```
+
+Open http://localhost:4173 to view the app. Verify no process runs as root:
+
+```bash
+docker run --rm bmad-todo-client whoami
+# Expected: webuser
+```
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
