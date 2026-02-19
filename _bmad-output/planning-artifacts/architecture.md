@@ -207,6 +207,18 @@ rails db:migrate
 | API client | `fetch` | No extra library; sufficient for REST |
 | Accessibility | Semantic HTML, ARIA where needed, keyboard, focus (WCAG 2.1 AA) | Per NFR and UX spec |
 
+### Performance Testing
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| **In scope** | Yes — performance testing is included to verify NFR-P1–P3 | Ensures user actions <200 ms (excl. network), real-time updates visible within 2 s, initial load <3 s are measurable and regression-checked. |
+| **What to measure** | API response times (GET/POST/PATCH tasks); client initial load and key interaction responsiveness | Aligns with NFR-P1 (action response), P2 (list visibility after action), P3 (initial load). |
+| **Approach** | Implementation-phase; tool choice in implementation | **API:** load or benchmark (e.g. k6, Artillery, or Rails performance tests) for endpoint latency/throughput. **Client:** e.g. Lighthouse CI or similar for LCP/load; optional synthetic flows. Threshold assertions (e.g. p95 under limit) in CI or pre-release. |
+| **When / where** | Pre-release or CI; frequency (every PR vs nightly) decided in implementation | Keeps performance regression under control without mandating a specific pipeline. |
+| **Documentation** | Document approach, thresholds, and how to run in README or docs | So agents and developers can run and interpret performance tests consistently. |
+
+**Note:** Unit/integration testing (e.g. Vitest, RSpec) remains separate; performance testing is additive and focused on NFR-P1–P3.
+
 ### Infrastructure & Deployment
 
 | Decision | Choice | Rationale |
@@ -525,7 +537,7 @@ bmad-todo-api/
 
 **Functional requirements coverage:** All FR categories are covered: task list & home (TaskList, TaskRow, GET /tasks), empty state (EmptyState), task creation (AddRow, POST /tasks, refetch/merge), task completion (TaskRow, PATCH /tasks/:id), load on open (useEffect + fetchTasks), data control & persistence (server storage, CORS), accessibility (components + semantics), application behaviour (SPA, fetch-only). No FR is without an architectural home.
 
-**Non-functional requirements coverage:** Performance (NFR-P1–P3): client and server are simple; refetch-after-mutation meets “no manual refresh” and responsiveness targets. Security (NFR-S1–S2): TLS, CORS, encryption at rest noted. Reliability (NFR-R2): error handling and “service unavailable” messaging specified. Accessibility (NFR-A1–A3): WCAG 2.1 AA and patterns documented. No NFR is unaddressed.
+**Non-functional requirements coverage:** Performance (NFR-P1–P3): client and server are simple; refetch-after-mutation meets “no manual refresh” and responsiveness targets; **performance testing is in scope** (API and client metrics, thresholds, tool choice in implementation) to verify and regress these targets. Security (NFR-S1–S2): TLS, CORS, encryption at rest noted. Reliability (NFR-R2): error handling and “service unavailable” messaging specified. Accessibility (NFR-A1–A3): WCAG 2.1 AA and patterns documented. No NFR is unaddressed.
 
 ### Implementation Readiness Validation ✅
 
@@ -539,7 +551,7 @@ bmad-todo-api/
 
 **Critical gaps:** None. Implementation can proceed.
 
-**Important gaps (non-blocking):** (1) Optional: API base URL config (e.g. single constant or env) is mentioned but could be one explicit line in patterns. (2) Optional: Vitest (or test runner) not in starter; add in first frontend story if desired.
+**Important gaps (non-blocking):** (1) Optional: API base URL config (e.g. single constant or env) is mentioned but could be one explicit line in patterns. (2) Optional: Vitest (or test runner) not in starter; add in first frontend story if desired. (3) Performance testing: now included as an architectural decision; tool choice and CI integration to be decided in implementation.
 
 **Nice-to-have:** Deployment, CI/CD, and monitoring deferred by choice. Real-time can be added later if needed.
 
@@ -595,6 +607,7 @@ No critical or important issues found. Optional gaps are minor and can be resolv
 - Use the documented naming, API response format, and error format consistently.
 - Respect project structure and boundaries (api/tasks.ts as sole backend caller; Rails controllers and Task model).
 - Refetch or merge from API after create/complete; no real-time channel for MVP.
+- Include performance testing (see **Performance testing** in Core Architectural Decisions) to verify NFR-P1–P3; choose tools and CI integration in implementation.
 
 **First implementation priority:**
 

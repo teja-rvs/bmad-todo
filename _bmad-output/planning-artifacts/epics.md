@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'epic-7-docker-added']
+stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'epic-7-docker-added', 'epic-8-performance-testing-added']
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -67,6 +67,7 @@ NFR-R2: If the server or network is unavailable, the app surfaces a clear indica
 - **Error handling:** Backend returns consistent JSON error and HTTP status; frontend surfaces user-facing message (e.g. "Couldn't save. Try again.") and optional retry; match NFR-R2 for service unavailable.
 - **Framework conventions:** Use Rails generators for model, controller, migrations; use Vite/React official scaffold; immutable state updates; single strategy for merging API responses into state.
 - **Docker (Epic 7):** Containerization via Docker; orchestration via Docker Compose (base `docker-compose.yml` at repo root, overrides `docker-compose.dev.yml`, `docker-compose.test.yml`). All app images: multistage builds only; non-root user in final stage. Health checks required for API and db; `depends_on: condition: service_healthy` for API on db. Dev/test config via env vars and compose overrides; `.env.example` at root; frontend in Docker must receive API URL via env (e.g. `VITE_API_URL`). Root `.dockerignore` to exclude _bmad-output, node_modules, .git, etc.
+- **Performance testing (Epic 8):** Performance testing in scope to verify NFR-P1–P3. Measure API response times (GET/POST/PATCH tasks) and client initial load / key interactions; tool choice in implementation (e.g. k6, Artillery, or Rails perf tests for API; Lighthouse CI or similar for client). Document approach, thresholds, and how to run; run in CI or pre-release (frequency decided in implementation).
 
 **From UX Design:**
 
@@ -129,6 +130,11 @@ The app behaves as an SPA (no full-page reloads for core flows) and surfaces cle
 ### Epic 7: Docker and local orchestration
 Developer can run the full stack (client, API, PostgreSQL) via Docker and Docker Compose with consistent dev/test parity, non-root containers, multistage builds, and health-checked services.
 **Source:** Architecture — Infrastructure & Deployment, Docker Patterns, Project Structure.
+
+### Epic 8: Performance testing
+The team can verify that the app meets performance targets (NFR-P1–P3) through repeatable or automated performance tests, so that regressions are detected and the app remains fast and responsive.
+**NFRs covered:** NFR-P1, NFR-P2, NFR-P3.
+**Source:** Architecture — Performance Testing.
 
 ---
 
@@ -403,3 +409,51 @@ So that onboarding and running tests in Docker are straightforward.
 **And** the frontend container receives the API URL via an env var (e.g. `VITE_API_URL` or equivalent) that points at the API service (e.g. `http://bmad-todo-api:3000` or as appropriate for the compose network), so the client in Docker can call the API.
 **And** a root `.env.example` lists all required env vars (e.g. `VITE_API_URL`, `DATABASE_URL`, `RAILS_ENV`) with example values and no secrets.
 **And** the README (or equivalent) documents how to run with Docker: e.g. `docker compose -f docker-compose.yml -f docker-compose.dev.yml up` for dev, and how to use the test override for running tests; which env vars are required and where to set them (e.g. `.env`).
+
+---
+
+## Epic 8: Performance testing
+
+The team can verify that the app meets performance targets (NFR-P1–P3) through repeatable or automated performance tests, so that regressions are detected and the app remains fast and responsive.
+
+### Story 8.1: API performance tests and thresholds
+
+As a developer,
+I want API endpoints (GET /tasks, POST /tasks, PATCH /tasks/:id) to have measurable performance and optional threshold assertions,
+So that we can verify NFR-P1 (action response) and NFR-P2 (list visibility after action) and catch API regressions.
+
+**Acceptance Criteria:**
+
+**Given** the Rails API with tasks endpoints is implemented,
+**When** I add performance tests or benchmarks (e.g. k6, Artillery, or Rails performance/benchmark tests),
+**Then** the tests measure response time (e.g. p95 or median) for GET /tasks, POST /tasks, and PATCH /tasks/:id under a defined load or single-request scenario.
+**And** thresholds or assertions are documented (e.g. p95 under 200 ms for single request, or as agreed for the environment); optional: fail the build or report if thresholds are exceeded.
+**And** the tests can be run via a documented command or script (e.g. `npm run perf:api`, `bundle exec rake perf`, or tool-specific command).
+
+### Story 8.2: Client performance checks — initial load and key metrics
+
+As a developer,
+I want the frontend to have measurable performance for initial load and key interactions,
+So that we can verify NFR-P3 (initial load within 3 s) and catch client-side regressions.
+
+**Acceptance Criteria:**
+
+**Given** the Vite/React client is implemented and buildable,
+**When** I add client performance checks (e.g. Lighthouse CI, or synthetic checks for LCP / first contentful paint / time to interactive),
+**Then** the checks measure initial load (or equivalent metric) and optionally key interaction responsiveness.
+**And** a threshold for initial load is documented (e.g. LCP or load completion within 3 s on a typical connection, or as agreed); optional: fail the build or report if the threshold is exceeded.
+**And** the checks can be run via a documented command or script (e.g. `npm run perf`, or Lighthouse CI in pipeline).
+
+### Story 8.3: Document performance approach and integrate into workflow
+
+As a developer,
+I want the performance testing approach, thresholds, and how to run it documented and (optionally) integrated into CI or pre-release,
+So that the team can run and interpret performance tests consistently and prevent regressions.
+
+**Acceptance Criteria:**
+
+**Given** API and client performance tests or checks exist (Stories 8.1 and 8.2),
+**When** I document the performance testing approach,
+**Then** the README or docs describe what is measured (API response times, client initial load / LCP), the chosen tools, and how to run the tests (commands or scripts).
+**And** the documented thresholds (e.g. p95 for API, initial load for client) are stated and traceable to NFR-P1–P3.
+**And** optionally, performance tests are run in CI (e.g. on every PR or on main) or as a pre-release step; if run in CI, the pipeline step and any required env or setup are documented.
