@@ -64,10 +64,11 @@ class TasksEdgeCasesTest < ActionDispatch::IntegrationTest
     assert_equal "  Spacey task  ", response.parsed_body["title"]
   end
 
-  test "DELETE /tasks/:id is not a recognized route" do
-    task = Task.create!(title: "Cannot delete", completed: false)
+  test "DELETE /tasks/:id returns 204 (route is recognized)" do
+    task = Task.create!(title: "Can delete", completed: false)
     delete "/tasks/#{task.id}"
-    assert_includes [ 404, 405 ], response.status
+    assert_response :no_content
+    assert_equal 204, response.status
   end
 
   test "PATCH /tasks/:id does not allow title update (only completed)" do

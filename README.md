@@ -124,6 +124,48 @@ k6 prints a summary to stdout after each run. Key lines to look for:
 
 A passing run ends with exit code 0. A failing run (any threshold breached) ends with a non-zero exit code.
 
+## Client Performance (Lighthouse CI)
+
+Client-side performance checks use [Lighthouse CI](https://github.com/GoogleChrome/lighthouse-ci) to measure Core Web Vitals against the production build. This validates NFR-P3 (initial load within 3 s).
+
+### Prerequisites
+
+- **Node.js** and npm (dependencies install with `npm install`)
+- **Chromium / Chrome** — LHCI needs a Chrome installation. The `perf` script auto-detects Playwright's bundled Chromium (already a project devDependency). If you see "Chromium not found", run `npx playwright install chromium` to download the browser binary.
+
+### Run
+
+From the `bmad-todo-client/` directory:
+
+```bash
+cd bmad-todo-client
+npm run perf
+```
+
+This builds the production bundle (`dist/`) and runs Lighthouse CI against it using `staticDistDir` — no running API is required.
+
+### Thresholds
+
+| Metric | Threshold | Level | NFR |
+|--------|-----------|-------|-----|
+| Largest Contentful Paint (LCP) | < 3 000 ms | error | NFR-P3 |
+| First Contentful Paint (FCP) | < 2 000 ms | error | — |
+| Performance score | ≥ 0.9 | error | — |
+| Total Blocking Time (TBT) | < 300 ms | warn | — |
+| Cumulative Layout Shift (CLS) | < 0.1 | warn | — |
+
+LHCI exits **non-zero** if any `error`-level threshold is exceeded. `warn`-level metrics are reported but do not fail the run.
+
+### Interpreting results
+
+LHCI runs Lighthouse 3 times and takes the median. Output to look for:
+
+- **"All results processed!"** — all assertions passed.
+- **"✘ metric-name failure"** — a threshold was breached; the expected and actual values are printed.
+- **Exit code 0** — pass. **Exit code 1** — at least one error-level assertion failed.
+
+Detailed HTML reports are saved to `bmad-todo-client/.lighthouseci/`.
+
 ## Layout
 
 - `bmad-todo-api/` — Rails API (PostgreSQL)

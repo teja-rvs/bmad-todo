@@ -85,6 +85,26 @@ describe('fetchTasks', () => {
 
     await expect(fetchTasks()).rejects.toThrow('Service unavailable. Couldn\'t load tasks. Try again.')
   })
+
+  it('throws user-facing message when response is 4xx (e.g. 403)', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      statusText: 'Forbidden',
+    })
+
+    await expect(fetchTasks()).rejects.toThrow('Service unavailable. Couldn\'t load tasks. Try again.')
+  })
+
+  it('throws user-facing message when response is 404', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+    })
+
+    await expect(fetchTasks()).rejects.toThrow('Service unavailable. Couldn\'t load tasks. Try again.')
+  })
 })
 
 describe('createTask', () => {
@@ -157,6 +177,43 @@ describe('createTask', () => {
     })
 
     await expect(createTask('Task')).rejects.toThrow('Title is too long')
+  })
+
+  it('throws user-friendly error when request times out (AbortError)', async () => {
+    const abortError = new DOMException('The operation was aborted.', 'AbortError')
+    ;(fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(abortError)
+
+    await expect(createTask('Task')).rejects.toThrow(/Service unavailable|Couldn't save|Try again/)
+  })
+
+  it('throws fallback message when error response json() fails', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => { throw new Error('invalid json') },
+    })
+
+    await expect(createTask('Task')).rejects.toThrow(/Couldn't save|Try again/)
+  })
+
+  it('throws fallback when errors[0] is a plain string', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => ({ errors: ['Title is required'] }),
+    })
+
+    await expect(createTask('Task')).rejects.toThrow('Title is required')
+  })
+
+  it('throws when 201 response has invalid body (missing id or title)', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      json: async () => ({ id: 1 }),
+    })
+
+    await expect(createTask('Task')).rejects.toThrow(/Couldn't save|Try again/)
   })
 })
 
@@ -258,6 +315,16 @@ describe('updateTask', () => {
       ok: true,
       status: 200,
       json: async () => ({ id: 1 }),
+    })
+
+    await expect(updateTask(1, { completed: true })).rejects.toThrow(/Couldn't save|Try again/)
+  })
+
+  it('throws fallback message when error response json() fails', async () => {
+    ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => { throw new Error('invalid json') },
     })
 
     await expect(updateTask(1, { completed: true })).rejects.toThrow(/Couldn't save|Try again/)
