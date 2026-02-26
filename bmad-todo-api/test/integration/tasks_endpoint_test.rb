@@ -3,6 +3,8 @@
 require "test_helper"
 
 class TasksEndpointTest < ActionDispatch::IntegrationTest
+  CORS_ORIGIN = ENV.fetch("CORS_ORIGIN", "http://localhost:8080")
+
   test "GET /tasks returns 200 and Content-Type application/json" do
     get "/tasks"
     assert_response :success
@@ -45,21 +47,21 @@ class TasksEndpointTest < ActionDispatch::IntegrationTest
   end
 
   test "GET /tasks returns CORS header for frontend origin" do
-    get "/tasks", headers: { "Origin" => "http://localhost:5173" }
+    get "/tasks", headers: { "Origin" => CORS_ORIGIN }
     assert_response :success
-    assert_equal "http://localhost:5173", response.headers["Access-Control-Allow-Origin"]
+    assert_equal CORS_ORIGIN, response.headers["Access-Control-Allow-Origin"]
   end
 
   test "POST /tasks returns CORS header for frontend origin" do
-    post "/tasks", params: { title: "CORS check" }, as: :json, headers: { "Origin" => "http://localhost:5173" }
-    assert_equal "http://localhost:5173", response.headers["Access-Control-Allow-Origin"]
+    post "/tasks", params: { title: "CORS check" }, as: :json, headers: { "Origin" => CORS_ORIGIN }
+    assert_equal CORS_ORIGIN, response.headers["Access-Control-Allow-Origin"]
   end
 
   test "PATCH /tasks/:id returns CORS header for frontend origin" do
     task = Task.create!(title: "CORS PATCH", completed: false)
-    patch "/tasks/#{task.id}", params: { completed: true }, as: :json, headers: { "Origin" => "http://localhost:5173" }
+    patch "/tasks/#{task.id}", params: { completed: true }, as: :json, headers: { "Origin" => CORS_ORIGIN }
     assert_response :ok
-    assert_equal "http://localhost:5173", response.headers["Access-Control-Allow-Origin"]
+    assert_equal CORS_ORIGIN, response.headers["Access-Control-Allow-Origin"]
   end
 
   test "POST /tasks with valid title returns 201 and created task with snake_case keys" do
