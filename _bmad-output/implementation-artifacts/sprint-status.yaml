@@ -78,5 +78,5 @@ development_status:
   epic-8: in-progress
   8-1-api-performance-tests-and-thresholds: done
   8-2-client-performance-checks-initial-load-and-key-metrics: done
-  8-3-document-performance-approach-and-integrate-into-workflow: backlog
+  8-3-document-performance-approach-and-integrate-into-workflow: done
   epic-8-retrospective: optional

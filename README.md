@@ -63,6 +63,12 @@ npm run dev
 
 Vite dev server runs at **http://localhost:5173** (default).
 
+## Performance Testing Documentation
+
+For the complete performance testing reference — philosophy, NFR traceability, CI integration, and detailed guidance — see **[docs/performance-testing.md](docs/performance-testing.md)**.
+
+The sections below provide a quick-start reference for running each suite locally.
+
 ## Performance Testing (k6)
 
 API performance tests live in `perf/` and use [Grafana k6](https://k6.io/).
@@ -149,8 +155,8 @@ This builds the production bundle (`dist/`) and runs Lighthouse CI against it us
 | Metric | Threshold | Level | NFR |
 |--------|-----------|-------|-----|
 | Largest Contentful Paint (LCP) | < 3 000 ms | error | NFR-P3 |
-| First Contentful Paint (FCP) | < 2 000 ms | error | — |
-| Performance score | ≥ 0.9 | error | — |
+| First Contentful Paint (FCP) | < 2 000 ms | error | NFR-P3 |
+| Performance score | ≥ 0.9 | error | NFR-P3 |
 | Total Blocking Time (TBT) | < 300 ms | warn | — |
 | Cumulative Layout Shift (CLS) | < 0.1 | warn | — |
 
