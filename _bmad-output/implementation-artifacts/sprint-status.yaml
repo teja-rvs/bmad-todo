@@ -75,8 +75,8 @@ development_status:
   7-4-compose-override-files-and-environment-configuration: done
   epic-7-retrospective: done
 
-  epic-8: backlog
-  8-1-api-performance-tests-and-thresholds: backlog
+  epic-8: in-progress
+  8-1-api-performance-tests-and-thresholds: done
   8-2-client-performance-checks-initial-load-and-key-metrics: backlog
   8-3-document-performance-approach-and-integrate-into-workflow: backlog
   epic-8-retrospective: optional

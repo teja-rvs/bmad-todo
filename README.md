@@ -63,8 +63,70 @@ npm run dev
 
 Vite dev server runs at **http://localhost:5173** (default).
 
+## Performance Testing (k6)
+
+API performance tests live in `perf/` and use [Grafana k6](https://k6.io/).
+
+### Install k6
+
+| OS | Command |
+|----|---------|
+| macOS (Homebrew) | `brew install k6` |
+| Debian / Ubuntu | `sudo gpg -k && sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D68 && echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \| sudo tee /etc/apt/sources.list.d/k6.list && sudo apt-get update && sudo apt-get install k6` |
+| Other | Download from https://k6.io/docs/get-started/installation/ |
+
+k6 is a standalone binary — no npm or gem dependency required.
+
+### Prerequisites
+
+1. The Rails API must be running (default `http://localhost:3000`):
+
+   ```bash
+   cd bmad-todo-api && rails s
+   # or via Docker:
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+   ```
+
+2. Teardown automatically removes all perf-test tasks (titles prefixed `perf-seed-` and `perf-iter-`) via DELETE /tasks/:id. Use a **test database** when possible so any leftover data does not accumulate in your development DB.
+
+### Run
+
+From the repo root:
+
+```bash
+k6 run perf/api-perf.js
+```
+
+Override the API base URL if the server is on a different host or port:
+
+```bash
+k6 run --env API_URL=http://localhost:3000 perf/api-perf.js
+```
+
+### Thresholds
+
+| Endpoint | Metric | Threshold |
+|----------|--------|-----------|
+| `GET /tasks` | p95 response time | < 200 ms |
+| `POST /tasks` | p95 response time | < 200 ms |
+| `PATCH /tasks/:id` | p95 response time | < 200 ms |
+
+k6 exits **non-zero** if any threshold is exceeded.
+
+### Interpreting results
+
+k6 prints a summary to stdout after each run. Key lines to look for:
+
+- **`http_req_duration{name:GET /tasks}`** — p95 and median timings for the GET endpoint.
+- **`http_req_duration{name:POST /tasks}`** — same for POST.
+- **`http_req_duration{name:PATCH /tasks/:id}`** — same for PATCH.
+- **`✓` / `✗`** next to each threshold indicates pass or fail.
+
+A passing run ends with exit code 0. A failing run (any threshold breached) ends with a non-zero exit code.
+
 ## Layout
 
 - `bmad-todo-api/` — Rails API (PostgreSQL)
 - `bmad-todo-client/` — Vite + React + TypeScript + Tailwind (Tailwind v4 via `@tailwindcss/vite`; content auto-detected)
+- `perf/` — k6 API performance tests
 - `_bmad-output/` — planning and implementation artifacts

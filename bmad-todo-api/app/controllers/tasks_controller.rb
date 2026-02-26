@@ -28,6 +28,16 @@ class TasksController < ApplicationController
     end
   end
 
+  def destroy
+    task = Task.find_by(id: params[:id])
+    if task.nil?
+      render json: { error: "Task not found" }, status: :not_found
+      return
+    end
+    task.destroy
+    head :no_content
+  end
+
   private
 
   def task_params
